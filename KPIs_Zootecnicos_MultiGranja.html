@@ -2699,10 +2699,12 @@ async function spLogin() {
   var challenge  = await spCodeChallenge(spCodeVerifier);
   sessionStorage.setItem('spVerifier', spCodeVerifier);
 
+  var cbUrl = 'https://cercafe-kpis.github.io/kpis-zootecnicos/sp_callback.html';
+
   var params = new URLSearchParams({
     client_id:             SP_CLIENT_ID,
     response_type:         'code',
-    redirect_uri:          'https://login.microsoftonline.com/common/oauth2/nativeclient',
+    redirect_uri:          cbUrl,
     scope:                 SP_SCOPES + ' offline_access',
     code_challenge:        challenge,
     code_challenge_method: 'S256',
@@ -2711,16 +2713,8 @@ async function spLogin() {
   var authUrl = 'https://login.microsoftonline.com/' + SP_TENANT_ID + '/oauth2/v2.0/authorize?' + params.toString();
 
   spSetStatus('Abriendo login de Microsoft...', '#0078d4');
-  var win = window.open(authUrl, 'MSLogin', 'width=520,height=680,left=300,top=80');
-
-  // Wait for postMessage from sp_callback.html
-  spSetStatus('Esperando login de Microsoft...', '#0078d4');
-  var winChecker = setInterval(function(){
-    if (win && win.closed) {
-      clearInterval(winChecker);
-      if (!spToken) spSetStatus('Ventana cerrada. Intenta de nuevo.', '#6b7280');
-    }
-  }, 500);
+  window.open(authUrl, 'MSLogin', 'width=520,height=680,left=300,top=80');
+  spSetStatus('Esperando login... (la ventana se cerrara automaticamente)', '#0078d4');
 }
 
 async function spExchangeCode(code) {
