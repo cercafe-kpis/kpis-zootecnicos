@@ -144,6 +144,10 @@ table.vt tr:hover td{background:#fafbff;}
 /* BUTTONS */
 .btn{background:#7b1010;color:#fff;border:none;padding:7px 14px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600;}
 .seg-filter{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;}
+.asoc-opt{padding:8px 14px;font-size:12px;font-weight:600;color:#1a1a2e;cursor:pointer;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+.asoc-opt:hover{background:#f5e8e8;color:#7b1010;}
+.asoc-opt.active{background:#7b1010;color:#fff;}
+.asoc-opt:last-child{border-bottom:none;}
 .sf-btn{background:#f3f4f6;color:#374151;border:1px solid #dde1e7;padding:4px 11px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:600;transition:all .15s;}
 .sf-btn:hover{border-color:#7b1010;color:#7b1010;}
 .sf-btn.on{background:#7b1010;color:#fff;border-color:#7b1010;}
@@ -200,11 +204,15 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
     <span style="color:#f5c6c6;font-size:11px;font-weight:400;">con Propósito</span>
   </div>
   <div class="topbar-right">
-    <div id="asocSelWrap" style="display:none;align-items:center;gap:6px;">
+     id="asocSelWrap" style="display:none;align-items:center;gap:6px;position:relative;">
       <label style="color:#f5c6c6;font-size:11px;font-weight:600;">Asociado:</label>
-      <select id="asocSelect" onchange="filterByAsociado(this.value)" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:3px 8px;font-size:12px;font-weight:600;">
-        <option value="Todos">Todos</option>
-      </select>
+      <div id="asocDropdown" style="position:relative;display:inline-block;">
+        <button id="asocBtn" onclick="toggleAsocMenu()" style="background:#5a0808;color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:4px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;min-width:160px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span id="asocBtnLabel">Todos</span>
+          <span style="font-size:10px;">&#9660;</span>
+        </button>
+        <div id="asocMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:200px;background:#fff;border:1px solid #dde1e7;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:999;overflow:hidden;"></div>
+      </div>
     </div>
     <div id="farmSelWrap">
       <label>Granja:</label>
@@ -2762,34 +2770,52 @@ function filterByAsociado(asoc) {
 }
 
 function populateAsocSelect() {
-  var sel = document.getElementById('asocSelect');
-  if (!sel) return;
-  // Build from actual allFarms data
+  var menu = document.getElementById('asocMenu');
+  if (!menu) return;
   var asocCounts = {};
   Object.keys(allFarms).forEach(function(f) {
     var a = allFarms[f].asociado || 'Sin asignar';
     asocCounts[a] = (asocCounts[a] || 0) + 1;
   });
   var total = Object.keys(allFarms).length;
-  sel.innerHTML = '';
-  // Add Todos option
-  var optTodos = document.createElement('option');
-  optTodos.value = 'Todos';
-  optTodos.textContent = 'Todos (' + total + ')';
-  optTodos.style.background = '#fff';
-  optTodos.style.color = '#1a1a2e';
-  sel.appendChild(optTodos);
-  // Add one option per asociado
+  menu.innerHTML = '';
+  // Todos option
+  var divTodos = document.createElement('div');
+  divTodos.className = 'asoc-opt' + (asociadoFiltro==='Todos'?' active':'');
+  divTodos.textContent = 'Todos (' + total + ')';
+  divTodos.onclick = function(){ selectAsoc('Todos', 'Todos ('+total+')'); };
+  menu.appendChild(divTodos);
+  // One per asociado
   Object.keys(asocCounts).sort().forEach(function(a) {
-    var opt = document.createElement('option');
-    opt.value = a;
-    opt.textContent = a + ' (' + asocCounts[a] + ')';
-    opt.style.background = '#fff';
-    opt.style.color = '#1a1a2e';
-    sel.appendChild(opt);
+    var div = document.createElement('div');
+    div.className = 'asoc-opt' + (asociadoFiltro===a?' active':'');
+    div.textContent = a + ' (' + asocCounts[a] + ')';
+    div.onclick = function(){ selectAsoc(a, a+' ('+asocCounts[a]+')'); };
+    menu.appendChild(div);
   });
-  sel.value = asociadoFiltro;
 }
+
+function selectAsoc(val, label) {
+  asociadoFiltro = val;
+  document.getElementById('asocBtnLabel').textContent = label;
+  document.getElementById('asocMenu').style.display = 'none';
+  filterByAsociado(val);
+  populateAsocSelect();
+}
+
+function toggleAsocMenu() {
+  var menu = document.getElementById('asocMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('asocDropdown');
+  if (dd && !dd.contains(e.target)) {
+    var menu = document.getElementById('asocMenu');
+    if (menu) menu.style.display = 'none';
+  }
+});
 
 function setMode(m) {
   document.getElementById('modeInd').style.display = m==='ind'?'block':'none';
