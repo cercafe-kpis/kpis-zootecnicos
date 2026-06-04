@@ -194,6 +194,20 @@ table.vt tr:hover td{background:#fafbff;}
 .smsg.ok{color:#1a7a4a;}.smsg.err{color:#dc2626;}
 footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12px;font-size:12px;color:#9ca3af;margin-top:20px;}
 </style>
+<script>
+// Run immediately on parse - before DOM loads
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  var a = p.get('asociado');
+  if (a && a !== 'admin') {
+    // Inject CSS immediately to hide upload before DOM renders
+    var s = document.createElement('style');
+    s.textContent = '#uploadArea{display:none!important;} #asocSelWrap{display:none!important;} #asocBanner{display:block!important;}';
+    document.head.appendChild(s);
+    document.documentElement.setAttribute('data-asociado', decodeURIComponent(a));
+  }
+})();
+</script>
 </head>
 <body>
 <div class="ov" id="ov"><div class="spin"></div><div class="sptx" id="ovtx">Procesando...</div></div>
