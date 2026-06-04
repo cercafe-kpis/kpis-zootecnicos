@@ -11,6 +11,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#f0f2f5;color:#1a1a2e;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;}
+body.modo-asociado #uploadArea{display:none!important;}
+body.modo-asociado #asocSelWrap{display:none!important;}
 /* TOPBAR */
 .topbar{background:#7b1010;height:50px;display:flex;align-items:center;padding:0 20px;gap:14px;}
 .topbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
@@ -204,7 +206,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
     <span style="color:#f5c6c6;font-size:11px;font-weight:400;">con Propósito</span>
   </div>
   <div class="topbar-right">
-     id="asocSelWrap" style="display:none;align-items:center;gap:6px;position:relative;">
+     <div id="asocSelWrap" style="display:none;align-items:center;gap:6px;position:relative;">
       <label style="color:#f5c6c6;font-size:11px;font-weight:600;">Asociado:</label>
       <div id="asocDropdown" style="position:relative;display:inline-block;">
         <button id="asocBtn" onclick="toggleAsocMenu()" style="background:#5a0808;color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:4px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;min-width:160px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;">
@@ -762,6 +764,12 @@ function finalizeLoad() {
   document.getElementById('farmSelWrap').style.display = 'flex';
   document.getElementById('periodoWrap').style.display = 'flex';
   document.getElementById('farmCount').style.display = 'inline';
+  // Hide upload area for asociado view
+  var urlP = new URLSearchParams(window.location.search);
+  if (urlP.get('asociado')) {
+    var ua = document.getElementById('uploadArea');
+    if (ua) ua.style.display = 'none';
+  }
   // Only show asoc selector for admin
   var urlParams = new URLSearchParams(window.location.search);
   var urlAsoc = urlParams.get('asociado');
@@ -1445,6 +1453,12 @@ function finalizeLoad() {
   document.getElementById('farmSelWrap').style.display = 'flex';
   document.getElementById('periodoWrap').style.display = 'flex';
   document.getElementById('farmCount').style.display = 'inline';
+  // Hide upload area for asociado view
+  var urlP = new URLSearchParams(window.location.search);
+  if (urlP.get('asociado')) {
+    var ua = document.getElementById('uploadArea');
+    if (ua) ua.style.display = 'none';
+  }
   // Only show asoc selector for admin
   var urlParams = new URLSearchParams(window.location.search);
   var urlAsoc = urlParams.get('asociado');
@@ -2511,21 +2525,21 @@ window.addEventListener('load', function() {
     // Hide upload area for asociado view - they only see results
     var isAdmin = !urlAsoc || urlAsoc === 'admin';
     if (!isAdmin) {
-      var uploadArea = document.getElementById('uploadArea');
-      if (uploadArea) uploadArea.style.display = 'none';
-      // Hide asociado selector
-      var asocWrap = document.getElementById('asocSelWrap');
-      if (asocWrap) asocWrap.style.display = 'none';
-      // Show banner
-      var banner = document.getElementById('asocBanner');
-      if (banner) { banner.style.display = 'block'; }
-      var bannerName = document.getElementById('asocBannerName');
-      if (bannerName) bannerName.textContent = asociadoFiltro;
+      // Add class to body for CSS-based hiding
+      document.body.classList.add('modo-asociado');
       // Update page title
       document.title = 'KPIs Zootecnicos - ' + asociadoFiltro;
-      // Hide export SharePoint section
-      var spSection = document.querySelector('.sp-section');
-      if (spSection) spSection.style.display = 'none';
+      // Show banner with asociado name
+      setTimeout(function() {
+        var banner = document.getElementById('asocBanner');
+        if (banner) banner.style.display = 'block';
+        var bannerName = document.getElementById('asocBannerName');
+        if (bannerName) bannerName.textContent = asociadoFiltro;
+        var uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) uploadArea.style.display = 'none';
+        var asocWrap = document.getElementById('asocSelWrap');
+        if (asocWrap) asocWrap.style.display = 'none';
+      }, 100);
     }
   }
 
