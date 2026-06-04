@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Autenticando KPIs Zootecnicos...</title>
+<style>
+  body{font-family:Segoe UI,sans-serif;display:flex;align-items:center;
+       justify-content:center;height:100vh;margin:0;background:#f0f6ff;}
+  .box{text-align:center;padding:40px;background:#fff;border-radius:12px;
+       box-shadow:0 4px 20px rgba(0,0,78,.1);max-width:340px;}
+  h3{color:#0078d4;margin:10px 0 6px;}
+  p{color:#6b7280;font-size:13px;margin:0;}
+  .ok{color:#15803d;font-size:28px;}
+  .err{color:#dc2626;font-size:28px;}
+</style>
+</head>
+<body>
+<div class="box" id="box">
+  <div style="font-size:32px">&#9729;</div>
+  <h3>Autenticando con Microsoft...</h3>
+  <p>Esta ventana se cerrara automaticamente.</p>
+</div>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var code  = params.get('code');
+  var error = params.get('error');
+  var state = params.get('state');
+
+  if (code) {
+    document.getElementById('box').innerHTML =
+      '<div class="ok">&#10003;</div><h3>Login exitoso</h3><p>Cerrando ventana...</p>';
+    if (window.opener) {
+      window.opener.postMessage({ type: 'SP_AUTH_CODE', code: code }, 'https://cercafe.sharepoint.com');
+    }
+    setTimeout(function(){ window.close(); }, 800);
+  } else if (error) {
+    document.getElementById('box').innerHTML =
+      '<div class="err">&#10007;</div><h3>Error de login</h3><p>' + error + '</p>';
+    if (window.opener) {
+      window.opener.postMessage({ type: 'SP_AUTH_ERROR', error: error }, 'https://cercafe.sharepoint.com');
+    }
+    setTimeout(function(){ window.close(); }, 2000);
+  }
+})();
+</script>
+</body>
+</html>
