@@ -339,24 +339,26 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
     <div class="ecard"><div class="ech"><div class="edot" style="background:#1060a8;"></div><div class="ecn">Todas las granjas</div></div><div class="ecb"><p>Una hoja por granja.</p><button class="btn" onclick="expAll()">↓ Descargar todo</button></div></div>
   </div>
 
-  <!-- SHAREPOINT -->
+  <!-- PUBLICAR EN SHAREPOINT -->
   <div style="margin-top:20px;border:2px solid #0078d4;border-radius:8px;overflow:hidden;">
     <div style="background:#0078d4;padding:10px 16px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:18px;">&#9729;</span>
-      <span style="color:#fff;font-weight:700;font-size:14px;">Guardar en SharePoint &mdash; KPIs Zootecnicos</span>
+      <span style="color:#fff;font-weight:700;font-size:14px;">Publicar datos en SharePoint de cada Asociado</span>
       <span id="spUserBadge" style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;display:none;"></span>
     </div>
     <div style="padding:14px 16px;background:#f0f6ff;">
       <p style="font-size:12px;color:#374151;margin-bottom:10px;">
-        Los archivos se guardan en <strong>cercafe.sharepoint.com/sites/KPIsZootecnicos</strong><br>
-        Carpeta: <code style="background:#e0eaff;padding:1px 6px;border-radius:3px;">KPIs Zootecnicos / [Granja] / [Periodo]</code>
+        Publica los datos procesados en el SharePoint de cada Asociado.<br>
+        Los Asociados veran sus datos actualizados automaticamente en su URL de KPIs.
       </p>
+      <div id="pubResumen" style="display:none;margin-bottom:12px;background:#fff;border:1px solid #dde1e7;border-radius:6px;padding:10px;font-size:12px;"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <button class="btn" id="spLoginBtn" onclick="spLogin()" style="background:#0078d4;">&#128273; Iniciar sesion con Microsoft</button>
-        <button class="btn" id="spUploadBtn" onclick="spUploadAll()" style="background:#0078d4;display:none;">&#9729; Subir todo a SharePoint</button>
+        <button class="btn" id="pubBtn" onclick="publicarTodo()" style="background:#15803d;display:none;">&#9729; Publicar todos los Asociados</button>
         <button class="btn" id="spLogoutBtn" onclick="spLogout()" style="background:#6b7280;display:none;font-size:11px;">Cerrar sesion</button>
       </div>
       <div id="spStatus" style="margin-top:10px;font-size:12px;color:#374151;"></div>
+      <div id="pubLog" style="margin-top:8px;font-size:11px;color:#6b7280;max-height:120px;overflow-y:auto;"></div>
     </div>
   </div>
 
@@ -2565,7 +2567,122 @@ window.addEventListener('load', function() {
     spUpdateUI(true);
     spSetStatus('Sesion activa: ' + spUser, '#15803d');
   }
+
+  // If asociado view - load data from SharePoint
+  var urlP2 = new URLSearchParams(window.location.search);
+  var urlA = urlP2.get('asociado');
+  if (urlA && urlA !== 'admin') {
+    cargarDatosAsociado(decodeURIComponent(urlA));
+  }
 });
+
+async function cargarDatosAsociado(asocName) {
+  var info = ASOCIADOS[asocName];
+  if (!info) {
+    mostrarMsgAsociado('No se encontro configuracion para el asociado: ' + asocName, '#dc2626');
+    return;
+  }
+
+  mostrarMsgAsociado('Cargando datos... por favor espere', '#0078d4');
+
+  try {
+    // Try to load without auth first (public read)
+    var sitePath = info.sp.match(/sharepoint\.com(\/sites\/[^\/]+)/);
+    if (!sitePath) throw new Error('URL invalida');
+
+    // Build Graph URL for the JSON file
+    var graphUrl = 'https://graph.microsoft.com/v1.0/sites/cercafe.sharepoint.com:' +
+      sitePath[1] + ':/drive/root:/KPIs%20Zootecnicos/kpis_data.json:/content';
+
+    // Need token to read from SharePoint
+    if (!spToken) {
+      mostrarMsgAsociado('Iniciando sesion con Microsoft para cargar datos...', '#0078d4');
+      // Trigger login and come back
+      sessionStorage.setItem('spPendingAsoc', asocName);
+      await spLogin();
+      return;
+    }
+
+    var r = await fetch(graphUrl, {
+      headers: { 'Authorization': 'Bearer ' + spToken }
+    });
+
+    if (r.status === 404) {
+      mostrarMsgAsociado('No hay datos publicados aun para ' + asocName + '. Contacte a Cercafe.', '#d97706');
+      return;
+    }
+    if (!r.ok) throw new Error('Error ' + r.status + ' al leer datos');
+
+    var data = await r.json();
+    cargarDataEnApp(data, asocName);
+
+  } catch(e) {
+    mostrarMsgAsociado('Error al cargar datos: ' + e.message, '#dc2626');
+  }
+}
+
+function mostrarMsgAsociado(msg, color) {
+  // Show message in the main area
+  var modeInd = document.getElementById('modeInd');
+  if (!modeInd) return;
+  var existing = document.getElementById('asocLoadMsg');
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'asocLoadMsg';
+    existing.style.cssText = 'padding:40px;text-align:center;font-size:14px;font-weight:600;';
+    modeInd.insertBefore(existing, modeInd.firstChild);
+  }
+  existing.style.color = color || '#374151';
+  existing.textContent = msg;
+}
+
+function cargarDataEnApp(data, asocName) {
+  // Load the JSON data into allFarms and render
+  var farms = data.farms;
+  if (!farms || !Object.keys(farms).length) {
+    mostrarMsgAsociado('No hay granjas en los datos publicados', '#d97706');
+    return;
+  }
+
+  // Remove loading message
+  var msg = document.getElementById('asocLoadMsg');
+  if (msg) msg.remove();
+
+  // Load each farm into allFarms
+  Object.keys(farms).forEach(function(fname) {
+    var fd = farms[fname];
+    allFarms[fname] = {
+      rawData:     {},
+      allVars:     fd.allVars || [],
+      criticos:    fd.criticos || [],
+      kpis:        fd.kpis || [],
+      periodo:     fd.periodo || '',
+      diasPeriodo: fd.diasPeriodo || 365,
+      asociado:    fd.asociado || asocName,
+      sp:          ASOCIADOS[asocName] ? ASOCIADOS[asocName].sp : ''
+    };
+  });
+
+  // Store global BM data for benchmarking
+  window._globalBMData = data.globalBM || {};
+
+  // Finalize loading
+  finalizeLoad();
+
+  // Apply asociado filter
+  filterByAsociado(asocName);
+
+  // Update banner
+  var bannerName = document.getElementById('asocBannerName');
+  if (bannerName) bannerName.textContent = asocName;
+
+  // Show period info
+  var periodo = data.periodo || '';
+  var periodoDisplay = document.getElementById('periodoDisplay');
+  if (periodoDisplay && periodo) periodoDisplay.textContent = periodo;
+
+  toast('Datos de ' + asocName + ' cargados correctamente');
+}
 
 // ── Listen for token message from sp_callback.html ───────────
 window.addEventListener('message', function(e) {
@@ -2682,12 +2799,17 @@ function spLogout() {
 }
 
 function spUpdateUI(loggedIn) {
-  document.getElementById('spLoginBtn').style.display  = loggedIn ? 'none' : 'inline-block';
-  document.getElementById('spUploadBtn').style.display = loggedIn ? 'inline-block' : 'none';
-  document.getElementById('spLogoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
-  var badge = document.getElementById('spUserBadge');
-  badge.style.display = loggedIn ? 'inline-block' : 'none';
-  if (loggedIn) badge.textContent = spUser || 'Conectado';
+  var loginBtn  = document.getElementById('spLoginBtn');
+  var pubBtn    = document.getElementById('pubBtn');
+  var logoutBtn = document.getElementById('spLogoutBtn');
+  var badge     = document.getElementById('spUserBadge');
+  if (loginBtn)  loginBtn.style.display  = loggedIn ? 'none' : 'inline-block';
+  if (pubBtn)    pubBtn.style.display    = loggedIn ? 'inline-block' : 'none';
+  if (logoutBtn) logoutBtn.style.display = loggedIn ? 'inline-block' : 'none';
+  if (badge) {
+    badge.style.display = loggedIn ? 'inline-block' : 'none';
+    if (loggedIn) badge.textContent = spUser || 'Conectado';
+  }
 }
 
 function spSetStatus(msg, color) {
@@ -2789,6 +2911,154 @@ async function spUploadAll() {
   }
 }
 
+
+// ============================================================
+// PUBLICAR DATOS EN SHAREPOINT POR ASOCIADO
+// ============================================================
+
+function pubLog(msg, color) {
+  var log = document.getElementById('pubLog');
+  if (log) {
+    var line = document.createElement('div');
+    line.style.color = color || '#6b7280';
+    line.textContent = new Date().toLocaleTimeString('es-CO') + ' — ' + msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+function buildAsocJSON(asocName) {
+  // Build a JSON with all data for this asociado
+  var farms = Object.keys(allFarms).filter(function(f) {
+    return allFarms[f].asociado === asocName;
+  });
+  if (!farms.length) return null;
+
+  // Build benchmarking data for ALL farms (global)
+  var globalBM = {};
+  Object.keys(BM).forEach(function(key) {
+    var vals = [];
+    Object.keys(allFarms).forEach(function(f) {
+      var v = getVal(key, f);
+      if (v !== null) vals.push({farm: f, val: v, asociado: allFarms[f].asociado});
+    });
+    if (vals.length) globalBM[key] = vals;
+  });
+
+  // Build per-farm data
+  var farmsData = {};
+  farms.forEach(function(f) {
+    var fd = allFarms[f];
+    farmsData[f] = {
+      asociado:  fd.asociado,
+      periodo:   fd.periodo,
+      diasPeriodo: fd.diasPeriodo,
+      criticos:  fd.criticos,
+      kpis:      fd.kpis,
+      allVars:   fd.allVars
+    };
+  });
+
+  return {
+    version:     '1.0',
+    generado:    new Date().toISOString(),
+    generadoPor: spUser || 'Admin',
+    asociado:    asocName,
+    farms:       farmsData,
+    globalBM:    globalBM,
+    periodo:     allFarms[farms[0]].periodo || ''
+  };
+}
+
+async function publicarAsociado(asocName, spSiteUrl) {
+  pubLog('Publicando ' + asocName + '...', '#0078d4');
+  try {
+    // Get site and drive
+    var sitePath = spSiteUrl.replace('https://cercafe.sharepoint.com', '');
+    var siteId  = await spGetSiteId2(spSiteUrl);
+    var driveId = await spGetDriveId(siteId);
+
+    // Ensure KPIs folder exists
+    var folderId = await spEnsureFolder(driveId, 'KPIs Zootecnicos');
+
+    // Build JSON
+    var data = buildAsocJSON(asocName);
+    if (!data) { pubLog('Sin granjas para ' + asocName, '#d97706'); return false; }
+
+    // Upload JSON
+    var json = JSON.stringify(data);
+    var blob = new Blob([json], {type: 'application/json'});
+    await spUploadFile(driveId, folderId, 'kpis_data.json', blob);
+
+    // Also upload period-specific backup
+    var periodo = data.periodo.replace(/\//g,'-').replace(/ /g,'_');
+    var backupName = 'kpis_data_' + periodo + '.json';
+    await spUploadFile(driveId, folderId, backupName, blob);
+
+    pubLog('✅ ' + asocName + ' publicado (' + Object.keys(data.farms).length + ' granjas)', '#15803d');
+    return true;
+  } catch(e) {
+    pubLog('❌ Error en ' + asocName + ': ' + e.message, '#dc2626');
+    return false;
+  }
+}
+
+async function spGetSiteId2(siteUrl) {
+  // Extract site path from full URL
+  var match = siteUrl.match(/sharepoint\.com(\/sites\/[^\/]+)/);
+  if (!match) throw new Error('URL invalida: ' + siteUrl);
+  var sitePath = match[1];
+  var r = await spCall('https://graph.microsoft.com/v1.0/sites/cercafe.sharepoint.com:' + sitePath);
+  var d = await r.json();
+  if (!d.id) throw new Error('Sitio no encontrado: ' + siteUrl);
+  return d.id;
+}
+
+async function publicarTodo() {
+  if (!Object.keys(allFarms).length) {
+    spSetStatus('Carga primero los archivos S4 de todas las granjas', '#d97706');
+    return;
+  }
+  if (!spToken) {
+    spSetStatus('Inicia sesion primero', '#d97706');
+    return;
+  }
+
+  // Show resumen
+  var resumen = document.getElementById('pubResumen');
+  var loaded = Object.keys(allFarms);
+  var asocLoaded = {};
+  loaded.forEach(function(f) {
+    var a = allFarms[f].asociado || 'Sin asignar';
+    if (!asocLoaded[a]) asocLoaded[a] = [];
+    asocLoaded[a].push(f);
+  });
+
+  var resHtml = '<strong>Granjas cargadas: ' + loaded.length + '</strong><br>';
+  Object.keys(asocLoaded).forEach(function(a) {
+    resHtml += '• ' + a + ': ' + asocLoaded[a].join(', ') + '<br>';
+  });
+  resumen.innerHTML = resHtml;
+  resumen.style.display = 'block';
+
+  // Clear log
+  document.getElementById('pubLog').innerHTML = '';
+  spSetStatus('Publicando datos...', '#0078d4');
+
+  var ok = 0, fail = 0;
+  // Publish for each asociado that has loaded farms
+  for (var asocName in asocLoaded) {
+    var info = ASOCIADOS[asocName];
+    if (!info) { pubLog('Asociado sin URL: ' + asocName, '#d97706'); continue; }
+    var success = await publicarAsociado(asocName, info.sp);
+    if (success) ok++; else fail++;
+  }
+
+  var msg = 'Publicacion completa: ' + ok + ' asociados OK';
+  if (fail) msg += ', ' + fail + ' con errores';
+  spSetStatus(msg, fail ? '#d97706' : '#15803d');
+  if (!fail) toast('Datos publicados en SharePoint de ' + ok + ' asociados');
+}
 
 // ============================================================
 // FILTROS POR SEGMENTO
