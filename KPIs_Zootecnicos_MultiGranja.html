@@ -2764,16 +2764,29 @@ function filterByAsociado(asoc) {
 function populateAsocSelect() {
   var sel = document.getElementById('asocSelect');
   if (!sel) return;
-  // Build from actual allFarms data - get unique asociados present
+  // Build from actual allFarms data
   var asocCounts = {};
   Object.keys(allFarms).forEach(function(f) {
     var a = allFarms[f].asociado || 'Sin asignar';
     asocCounts[a] = (asocCounts[a] || 0) + 1;
   });
   var total = Object.keys(allFarms).length;
-  sel.innerHTML = '<option value="Todos">Todos (' + total + ')</option>';
+  sel.innerHTML = '';
+  // Add Todos option
+  var optTodos = document.createElement('option');
+  optTodos.value = 'Todos';
+  optTodos.textContent = 'Todos (' + total + ')';
+  optTodos.style.background = '#fff';
+  optTodos.style.color = '#1a1a2e';
+  sel.appendChild(optTodos);
+  // Add one option per asociado
   Object.keys(asocCounts).sort().forEach(function(a) {
-    sel.innerHTML += '<option value="' + a + '">' + a + ' (' + asocCounts[a] + ')</option>';
+    var opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a + ' (' + asocCounts[a] + ')';
+    opt.style.background = '#fff';
+    opt.style.color = '#1a1a2e';
+    sel.appendChild(opt);
   });
   sel.value = asociadoFiltro;
 }
