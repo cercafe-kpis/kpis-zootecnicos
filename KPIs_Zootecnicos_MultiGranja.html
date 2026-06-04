@@ -2746,9 +2746,15 @@ function filterByAsociado(asoc) {
   // Update farm selector to show only farms of selected asociado
   var sel = document.getElementById('farmSelect');
   var farms = Object.keys(allFarms).filter(function(f){
-    return asoc === 'Todos' || (allFarms[f].asociado === asoc);
+    var farmAsoc = allFarms[f].asociado || 'Sin asignar';
+    return asoc === 'Todos' || farmAsoc === asoc;
   });
-  sel.innerHTML = farms.map(function(f){ return '<option value="'+f+'">'+f+'</option>'; }).join('');
+  sel.innerHTML = '';
+  farms.forEach(function(f){
+    var opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    sel.appendChild(opt);
+  });
   if (farms.length) selectFarm(farms[0]);
   // Update farm count
   var cnt = document.getElementById('farmCount');
@@ -2758,12 +2764,18 @@ function filterByAsociado(asoc) {
 function populateAsocSelect() {
   var sel = document.getElementById('asocSelect');
   if (!sel) return;
-  var asocs = Object.keys(ASOCIADOS).sort();
-  sel.innerHTML = '<option value="Todos">Todos (' + Object.keys(allFarms).length + ')</option>';
-  asocs.forEach(function(a) {
-    var count = Object.keys(allFarms).filter(function(f){ return allFarms[f].asociado === a; }).length;
-    if (count > 0) sel.innerHTML += '<option value="'+a+'">'+a+' ('+count+')</option>';
+  // Build from actual allFarms data - get unique asociados present
+  var asocCounts = {};
+  Object.keys(allFarms).forEach(function(f) {
+    var a = allFarms[f].asociado || 'Sin asignar';
+    asocCounts[a] = (asocCounts[a] || 0) + 1;
   });
+  var total = Object.keys(allFarms).length;
+  sel.innerHTML = '<option value="Todos">Todos (' + total + ')</option>';
+  Object.keys(asocCounts).sort().forEach(function(a) {
+    sel.innerHTML += '<option value="' + a + '">' + a + ' (' + asocCounts[a] + ')</option>';
+  });
+  sel.value = asociadoFiltro;
 }
 
 function setMode(m) {
