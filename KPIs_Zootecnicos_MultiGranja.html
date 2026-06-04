@@ -200,6 +200,12 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
     <span style="color:#f5c6c6;font-size:11px;font-weight:400;">con Propósito</span>
   </div>
   <div class="topbar-right">
+    <div id="asocSelWrap" style="display:none;align-items:center;gap:6px;">
+      <label style="color:#f5c6c6;font-size:11px;font-weight:600;">Asociado:</label>
+      <select id="asocSelect" onchange="filterByAsociado(this.value)" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:3px 8px;font-size:12px;font-weight:600;">
+        <option value="Todos">Todos</option>
+      </select>
+    </div>
     <div id="farmSelWrap">
       <label>Granja:</label>
       <select id="farmSelect" onchange="selectFarm(this.value)"></select>
@@ -382,6 +388,49 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
 // ============================================================
 var allFarms = {};
 // Init MSAL on page load to handle redirect response
+
+// ============================================================
+// TABLA MAESTRA — GRANJAS Y ASOCIADOS
+// ============================================================
+var ADMIN_EMAIL = 'nathalia.monedero@cercafe.com.co';
+
+var TABLA_MAESTRA = [
+  {granja:'Granja El Ruby',       asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn'},
+  {granja:'Buenos Aires',         asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2'},
+  {granja:'El Treból – Magro SA', asociado:'HBM',             sp:'https://cercafe.sharepoint.com/sites/TuHubHBM'},
+  {granja:'Pontevedra',           asociado:'AGROCERDOS',      sp:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS'},
+  {granja:'Chambacu',             asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2'},
+  {granja:'Campeón',              asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon'},
+  {granja:'Corcega cría',         asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2'},
+  {granja:'Crecerdos',            asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon'},
+  {granja:'El Bosque',            asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2'},
+  {granja:'Fátima',               asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn'},
+  {granja:'Guaymaral',            asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2'},
+  {granja:'La Cecilia',           asociado:'AGRO JABAR',      sp:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES'},
+  {granja:'La Estrella',          asociado:'AGRO JABAR',      sp:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES'},
+  {granja:'La Fabiola',           asociado:'HBM',             sp:'https://cercafe.sharepoint.com/sites/TuHubHBM'},
+  {granja:'La Virtud',            asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon'},
+  {granja:'Meseta',               asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn'},
+  {granja:'Salamanca',            asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2'},
+  {granja:'San Antonio',          asociado:'AGROCERDOS',      sp:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS'},
+  {granja:'Sierramorena',         asociado:'GAM',             sp:'https://cercafe.sharepoint.com/sites/TuHubPIGAM'},
+  {granja:'La Ciberita',          asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn'}
+];
+
+var ASOCIADOS = {};
+TABLA_MAESTRA.forEach(function(r) {
+  if (!ASOCIADOS[r.asociado]) ASOCIADOS[r.asociado] = {sp: r.sp, granjas: []};
+  ASOCIADOS[r.asociado].granjas.push(r.granja);
+});
+
+var asociadoFiltro = 'Todos';
+
+function getGranjaInfo(nombre) {
+  if (!nombre) return null;
+  return TABLA_MAESTRA.find(function(r){
+    return r.granja.toLowerCase().trim() === nombre.toLowerCase().trim();
+  }) || null;
+}
 
 var activeFarm = '';
 var farmName = '';
@@ -678,7 +727,10 @@ function parseWb(wb) {
   calcCriticos();
   calcKPIs();
   currentDiasPeriodo = 365;
-  allFarms[name] = {rawData: rd, allVars: av, criticos: criticos.slice(), kpis: kpis.slice(), periodo: periodoStr, diasPeriodo: diasPeriodo};
+  var granjaInfo = getGranjaInfo(name);
+  allFarms[name] = {rawData: rd, allVars: av, criticos: criticos.slice(), kpis: kpis.slice(), periodo: periodoStr, diasPeriodo: diasPeriodo,
+    asociado: granjaInfo ? granjaInfo.asociado : 'Sin asignar',
+    sp: granjaInfo ? granjaInfo.sp : ''};
   farmName = savedFarm; rawData = savedRD; allVars = savedAV; criticos = savedC; kpis = savedK;
 }
 
@@ -699,6 +751,8 @@ function finalizeLoad() {
   document.getElementById('farmSelWrap').style.display = 'flex';
   document.getElementById('periodoWrap').style.display = 'flex';
   document.getElementById('farmCount').style.display = 'inline';
+  document.getElementById('asocSelWrap').style.display = 'flex';
+  populateAsocSelect();
   document.getElementById('farmCount').textContent = names.length + (names.length===1?' granja':' granjas');
   document.getElementById('bmFarmCount').textContent = names.length;
 
@@ -728,8 +782,9 @@ function renderChips() {
     var chip = document.createElement('div');
     chip.className = 'fchip';
     chip.title = n;
+    var gInfo = getGranjaInfo(n);
     var span = document.createElement('span');
-    span.textContent = dot + ' ' + n;
+    span.textContent = dot + ' ' + n + (gInfo ? ' ['+gInfo.asociado+']' : '');
     var cx = document.createElement('span');
     cx.className = 'cx';
     cx.textContent = ' ×';
@@ -770,6 +825,7 @@ function removeFarm(name) {
     document.getElementById('farmSelWrap').style.display = 'none';
     document.getElementById('periodoWrap').style.display = 'none';
     document.getElementById('farmCount').style.display = 'none';
+    document.getElementById('asocSelWrap').style.display = 'none';
     document.getElementById('farmChips').style.display = 'none';
     activeFarm=''; farmName=''; rawData={}; allVars=[]; criticos=[]; kpis=[];
     return;
@@ -1341,7 +1397,10 @@ function parseWb(wb) {
   calcCriticos();
   calcKPIs();
   currentDiasPeriodo = 365;
-  allFarms[name] = {rawData: rd, allVars: av, criticos: criticos.slice(), kpis: kpis.slice(), periodo: periodoStr, diasPeriodo: diasPeriodo};
+  var granjaInfo = getGranjaInfo(name);
+  allFarms[name] = {rawData: rd, allVars: av, criticos: criticos.slice(), kpis: kpis.slice(), periodo: periodoStr, diasPeriodo: diasPeriodo,
+    asociado: granjaInfo ? granjaInfo.asociado : 'Sin asignar',
+    sp: granjaInfo ? granjaInfo.sp : ''};
   farmName = savedFarm; rawData = savedRD; allVars = savedAV; criticos = savedC; kpis = savedK;
 }
 
@@ -1362,6 +1421,8 @@ function finalizeLoad() {
   document.getElementById('farmSelWrap').style.display = 'flex';
   document.getElementById('periodoWrap').style.display = 'flex';
   document.getElementById('farmCount').style.display = 'inline';
+  document.getElementById('asocSelWrap').style.display = 'flex';
+  populateAsocSelect();
   document.getElementById('farmCount').textContent = names.length + (names.length===1?' granja':' granjas');
   document.getElementById('bmFarmCount').textContent = names.length;
 
@@ -1391,8 +1452,9 @@ function renderChips() {
     var chip = document.createElement('div');
     chip.className = 'fchip';
     chip.title = n;
+    var gInfo = getGranjaInfo(n);
     var span = document.createElement('span');
-    span.textContent = dot + ' ' + n;
+    span.textContent = dot + ' ' + n + (gInfo ? ' ['+gInfo.asociado+']' : '');
     var cx = document.createElement('span');
     cx.className = 'cx';
     cx.textContent = ' ×';
@@ -1433,6 +1495,7 @@ function removeFarm(name) {
     document.getElementById('farmSelWrap').style.display = 'none';
     document.getElementById('periodoWrap').style.display = 'none';
     document.getElementById('farmCount').style.display = 'none';
+    document.getElementById('asocSelWrap').style.display = 'none';
     document.getElementById('farmChips').style.display = 'none';
     activeFarm=''; farmName=''; rawData={}; allVars=[]; criticos=[]; kpis=[];
     return;
@@ -2378,12 +2441,8 @@ var SP_SITENAME  = 'KPIsZootecnicos';
 var SP_SCOPES    = 'Files.ReadWrite Sites.ReadWrite.All User.Read';
 
 function spCallbackUri() {
-  // Si estamos en SharePoint usar esa URL, si no usar localhost
-  var host = window.location.hostname;
-  if (host.indexOf('sharepoint.com') > -1 || host.indexOf('cercafe') > -1) {
-    return 'https://cercafe.sharepoint.com/sites/KPIsZootecnicos/SitePages/sp_callback.aspx';
-  }
-  return 'http://localhost:8080/sp_callback.html';
+  // Always use GitHub Pages callback URL
+  return 'https://cercafe-kpis.github.io/kpis-zootecnicos/sp_callback.html';
 }
 var spToken      = null;
 var spUser       = null;
@@ -2679,6 +2738,31 @@ function goP(n) {
   });
   document.querySelectorAll('.step').forEach(function(s,i){
     s.className = 'step' + (i===n?' on':'') + (i<n?' done':'');
+  });
+}
+
+function filterByAsociado(asoc) {
+  asociadoFiltro = asoc;
+  // Update farm selector to show only farms of selected asociado
+  var sel = document.getElementById('farmSelect');
+  var farms = Object.keys(allFarms).filter(function(f){
+    return asoc === 'Todos' || (allFarms[f].asociado === asoc);
+  });
+  sel.innerHTML = farms.map(function(f){ return '<option value="'+f+'">'+f+'</option>'; }).join('');
+  if (farms.length) selectFarm(farms[0]);
+  // Update farm count
+  var cnt = document.getElementById('farmCount');
+  if (cnt) cnt.textContent = farms.length + ' granja' + (farms.length!==1?'s':'');
+}
+
+function populateAsocSelect() {
+  var sel = document.getElementById('asocSelect');
+  if (!sel) return;
+  var asocs = Object.keys(ASOCIADOS).sort();
+  sel.innerHTML = '<option value="Todos">Todos (' + Object.keys(allFarms).length + ')</option>';
+  asocs.forEach(function(a) {
+    var count = Object.keys(allFarms).filter(function(f){ return allFarms[f].asociado === a; }).length;
+    if (count > 0) sel.innerHTML += '<option value="'+a+'">'+a+' ('+count+')</option>';
   });
 }
 

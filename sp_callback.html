@@ -31,14 +31,14 @@
     document.getElementById('box').innerHTML =
       '<div class="ok">&#10003;</div><h3>Login exitoso</h3><p>Cerrando ventana...</p>';
     if (window.opener) {
-      window.opener.postMessage({ type: 'SP_AUTH_CODE', code: code }, 'https://cercafe.sharepoint.com');
+      window.opener.postMessage({ type: 'SP_AUTH_CODE', code: code }, 'https://cercafe-kpis.github.io');
     }
     setTimeout(function(){ window.close(); }, 800);
   } else if (error) {
     document.getElementById('box').innerHTML =
       '<div class="err">&#10007;</div><h3>Error de login</h3><p>' + error + '</p>';
     if (window.opener) {
-      window.opener.postMessage({ type: 'SP_AUTH_ERROR', error: error }, 'https://cercafe.sharepoint.com');
+      window.opener.postMessage({ type: 'SP_AUTH_ERROR', error: error }, 'https://cercafe-kpis.github.io');
     }
     setTimeout(function(){ window.close(); }, 2000);
   }
