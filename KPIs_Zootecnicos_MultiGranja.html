@@ -2699,10 +2699,13 @@ function cargarDataEnApp(data, asocName) {
     };
   });
 
-  // Store global BM data for benchmarking
+  // Store global BM data BEFORE finalizeLoad so renderBM can use it
   window._globalBMData = data.globalBM || {};
 
-  // Finalize loading
+  // Mark body as asociado mode BEFORE finalizeLoad so renderBM detects it
+  document.body.classList.add('modo-asociado');
+
+  // Finalize loading (calls renderBM internally)
   finalizeLoad();
 
   // Apply asociado filter
