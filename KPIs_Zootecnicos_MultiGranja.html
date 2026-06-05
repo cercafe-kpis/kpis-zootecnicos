@@ -2688,9 +2688,18 @@ function cargarDataEnApp(data, asocName) {
 window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SP_AUTH_CODE' && e.data.code) {
     spSetStatus('Autenticando con Microsoft...', '#0078d4');
-    spExchangeCode(e.data.code);
+    spExchangeCode(e.data.code).then(function() {
+      // After login, check if there's a pending asociado load
+      var pending = sessionStorage.getItem('spPendingAsoc');
+      if (pending) {
+        sessionStorage.removeItem('spPendingAsoc');
+        mostrarMsgAsociado('Sesion iniciada. Cargando datos de ' + pending + '...', '#0078d4');
+        cargarDatosAsociado(pending);
+      }
+    });
   } else if (e.data && e.data.type === 'SP_AUTH_ERROR') {
     spSetStatus('Error de login: ' + (e.data.error||'desconocido'), '#dc2626');
+    mostrarMsgAsociado('Error al iniciar sesion con Microsoft. Intente de nuevo.', '#dc2626');
   }
 });
 
