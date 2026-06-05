@@ -2110,8 +2110,15 @@ function renderHeatmap(farms, ownFarms) {
     var isMine = ownFarms.indexOf(f) >= 0;
     var rowStyle = isMine ? ' style="background:#fff8f0;"' : '';
     html += '<tr'+rowStyle+'><td class="hm-farm">'+(isMine?'★ ':'')+f+'</td>';
+    var globalData = window._globalBMData || {};
     HM_KPIS.forEach(function(h) {
-      var val = getVal(h.k, f);
+      // In asociado mode use globalBM data; fallback to getVal for admin mode
+      var val = null;
+      if (globalData[h.k]) {
+        var entry = globalData[h.k].find(function(e){return e.farm===f;});
+        if (entry) val = entry.val;
+      }
+      if (val === null) val = getVal(h.k, f);
       var col = val!==null ? semCol(h.k, val) : null;
       var bg = col==='verde'?'rgba(21,128,61,.15)':col==='amarillo'?'rgba(217,119,6,.18)':col==='rojo'?'rgba(220,38,38,.18)':'#f8f9fa';
       var tc = col==='verde'?'#15803d':col==='amarillo'?'#92400e':col==='rojo'?'#991b1b':'#9ca3af';
@@ -3065,9 +3072,12 @@ function buildAsocJSON(asocName) {
   });
   if (!farms.length) return null;
 
-  // Build benchmarking data for ALL farms (global)
+  // Build benchmarking data for ALL farms (global) — includes BM keys + HM keys
   var globalBM = {};
-  Object.keys(BM).forEach(function(key) {
+  var allBMKeys = Object.keys(BM).concat(HM_KPIS.map(function(h){return h.k;}));
+  // deduplicate
+  allBMKeys = allBMKeys.filter(function(k,i){return allBMKeys.indexOf(k)===i;});
+  allBMKeys.forEach(function(key) {
     var vals = [];
     Object.keys(allFarms).forEach(function(f) {
       var v = getVal(key, f);
