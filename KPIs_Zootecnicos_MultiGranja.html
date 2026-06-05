@@ -2585,33 +2585,36 @@ async function cargarDatosAsociado(asocName) {
 
   mostrarMsgAsociado('Cargando datos... por favor espere', '#0078d4');
 
+  // Need token to read from SharePoint
+  if (!spToken) {
+    mostrarMsgAsociado('Iniciando sesion con Microsoft para cargar datos...', '#0078d4');
+    sessionStorage.setItem('spPendingAsoc', asocName);
+    await spLogin();
+    return;
+  }
+
   try {
-    // Try to load without auth first (public read)
-    var sitePath = info.sp.match(/sharepoint\.com(\/sites\/[^\/]+)/);
-    if (!sitePath) throw new Error('URL invalida');
+    // Get siteId -> driveId -> file content
+    mostrarMsgAsociado('Conectando con SharePoint...', '#0078d4');
+    var siteId  = await spGetSiteId2(info.sp);
+    var driveId = await spGetDriveId(siteId);
 
-    // Build Graph URL for the JSON file
-    var graphUrl = 'https://graph.microsoft.com/v1.0/sites/cercafe.sharepoint.com:' +
-      sitePath[1] + ':/drive/root:/KPIs%20Zootecnicos/kpis_data.json:/content';
+    // Use drives/{driveId}/root:/{path}:/content — most reliable Graph API form
+    var graphUrl = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
+      '/root:/KPIs%20Zootecnicos/kpis_data.json:/content';
 
-    // Need token to read from SharePoint
-    if (!spToken) {
-      mostrarMsgAsociado('Iniciando sesion con Microsoft para cargar datos...', '#0078d4');
-      // Trigger login and come back
-      sessionStorage.setItem('spPendingAsoc', asocName);
-      await spLogin();
-      return;
-    }
-
-    var r = await fetch(graphUrl, {
-      headers: { 'Authorization': 'Bearer ' + spToken }
-    });
+    mostrarMsgAsociado('Descargando datos...', '#0078d4');
+    var r = await spCall(graphUrl);
 
     if (r.status === 404) {
       mostrarMsgAsociado('No hay datos publicados aun para ' + asocName + '. Contacte a Cercafe.', '#d97706');
       return;
     }
-    if (!r.ok) throw new Error('Error ' + r.status + ' al leer datos');
+    if (!r.ok) {
+      var errTxt = '';
+      try { var errJ = await r.json(); errTxt = errJ.error ? errJ.error.message : JSON.stringify(errJ); } catch(e2) {}
+      throw new Error('Error ' + r.status + ' al leer datos: ' + errTxt);
+    }
 
     var data = await r.json();
     cargarDataEnApp(data, asocName);
