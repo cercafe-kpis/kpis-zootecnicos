@@ -13,6 +13,7 @@
 body{background:#f0f2f5;color:#1a1a2e;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;}
 body.modo-asociado #uploadArea{display:none!important;}
 body.modo-asociado #asocSelWrap{display:none!important;}
+body.modo-asociado #spPublishPanel{display:none!important;}
 /* TOPBAR */
 .topbar{background:#7b1010;height:50px;display:flex;align-items:center;padding:0 20px;gap:14px;}
 .topbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
@@ -340,7 +341,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
   </div>
 
   <!-- PUBLICAR EN SHAREPOINT -->
-  <div style="margin-top:20px;border:2px solid #0078d4;border-radius:8px;overflow:hidden;">
+  <div id="spPublishPanel" style="margin-top:20px;border:2px solid #0078d4;border-radius:8px;overflow:hidden;">
     <div style="background:#0078d4;padding:10px 16px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:18px;">&#9729;</span>
       <span style="color:#fff;font-weight:700;font-size:14px;">Publicar datos en SharePoint de cada Asociado</span>
@@ -2688,7 +2689,7 @@ function cargarDataEnApp(data, asocName) {
   Object.keys(farms).forEach(function(fname) {
     var fd = farms[fname];
     allFarms[fname] = {
-      rawData:     {},
+      rawData:     fd.rawData || {},
       allVars:     fd.allVars || [],
       criticos:    fd.criticos || [],
       kpis:        fd.kpis || [],
@@ -3013,17 +3014,18 @@ function buildAsocJSON(asocName) {
     if (vals.length) globalBM[key] = vals;
   });
 
-  // Build per-farm data
+  // Build per-farm data (include rawData so Datos limpios tab works)
   var farmsData = {};
   farms.forEach(function(f) {
     var fd = allFarms[f];
     farmsData[f] = {
-      asociado:  fd.asociado,
-      periodo:   fd.periodo,
+      asociado:    fd.asociado,
+      periodo:     fd.periodo,
       diasPeriodo: fd.diasPeriodo,
-      criticos:  fd.criticos,
-      kpis:      fd.kpis,
-      allVars:   fd.allVars
+      criticos:    fd.criticos,
+      kpis:        fd.kpis,
+      allVars:     fd.allVars,
+      rawData:     fd.rawData || {}
     };
   });
 
