@@ -243,8 +243,9 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
   </div>
 </div>
 
-<div id="asocBanner" style="display:none;background:#f5e8e8;border-bottom:2px solid #7b1010;padding:8px 20px;font-size:12px;color:#7b1010;font-weight:600;">
-  📊 Vista Asociado: <span id="asocBannerName"></span> — Solo lectura · Datos procesados por Cercafe
+<div id="asocBanner" style="display:none;background:#f5e8e8;border-bottom:2px solid #7b1010;padding:6px 20px;font-size:12px;color:#7b1010;font-weight:600;display:flex;align-items:center;gap:8px;">
+  <span>📊 Vista Asociado: <span id="asocBannerName"></span> — Solo lectura · Datos procesados por Cercafe</span>
+  <a id="hubBtn" href="#" target="_blank" style="margin-left:auto;background:#7b1010;color:#fff;border-radius:6px;padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;">🏠 Ir a Tu.HUB</a>
 </div>
 <div class="modebar">
   <button class="mbtn on" id="modeIndBtn" onclick="setMode('ind')">🏠 Análisis por granja</button>
@@ -2715,6 +2716,12 @@ function cargarDataEnApp(data, asocName) {
   // Update banner
   var bannerName = document.getElementById('asocBannerName');
   if (bannerName) bannerName.textContent = asocName;
+  // Set TuHUB link
+  var hubBtn = document.getElementById('hubBtn');
+  if (hubBtn && ASOCIADOS[asocName]) {
+    hubBtn.href = ASOCIADOS[asocName].sp;
+    hubBtn.style.display = 'inline-block';
+  }
 
   // Show period info
   var periodo = data.periodo || '';
