@@ -2842,14 +2842,40 @@ async function spEnsureFolder(driveId, path) {
   var parts = path.split('/').filter(function(p){return p.trim();});
   var parentId = 'root';
   for (var i = 0; i < parts.length; i++) {
+    var folderName = parts[i].trim();
+    // Intentar crear la carpeta
     var r = await spCall('https://graph.microsoft.com/v1.0/drives/'+driveId+'/items/'+parentId+'/children', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name:parts[i].trim(), folder:{}, '@microsoft.graph.conflictBehavior':'ignore'})
+      body: JSON.stringify({name:folderName, folder:{}, '@microsoft.graph.conflictBehavior':'ignore'})
     });
-    var d = await r.json();
-    if (!d.id) throw new Error('Error creando carpeta: ' + parts[i]);
-    parentId = d.id;
+    var d = null;
+    // Graph API a veces devuelve 200/201 con body, o 200 sin id si ya existe
+    try { d = await r.json(); } catch(e) { d = {}; }
+
+    if (d && d.id) {
+      parentId = d.id;
+    } else {
+      // Carpeta ya existia o no retorno id — buscarla con GET
+      var r2 = await spCall('https://graph.microsoft.com/v1.0/drives/'+driveId+'/items/'+parentId+'/children?$filter=name eq \''+encodeURIComponent(folderName)+'\'&$select=id,name');
+      var d2 = null;
+      try { d2 = await r2.json(); } catch(e2) { d2 = {}; }
+      if (d2 && d2.value && d2.value.length > 0) {
+        parentId = d2.value[0].id;
+      } else {
+        // Ultimo intento: buscar sin filtro OData (algunos tenants no soportan $filter en children)
+        var r3 = await spCall('https://graph.microsoft.com/v1.0/drives/'+driveId+'/items/'+parentId+'/children?$select=id,name');
+        var d3 = null;
+        try { d3 = await r3.json(); } catch(e3) { d3 = {}; }
+        var found = d3 && d3.value && d3.value.find(function(x){ return x.name === folderName; });
+        if (found) {
+          parentId = found.id;
+        } else {
+          var detail = d ? (d.error ? d.error.message : JSON.stringify(d)) : 'sin respuesta';
+          throw new Error('No se pudo crear/encontrar carpeta "' + folderName + '": ' + detail);
+        }
+      }
+    }
   }
   return parentId;
 }
@@ -2993,6 +3019,7 @@ async function publicarAsociado(asocName, spSiteUrl) {
     return true;
   } catch(e) {
     pubLog('❌ Error en ' + asocName + ': ' + e.message, '#dc2626');
+    console.error('SP publicar error [' + asocName + ']:', e);
     return false;
   }
 }
@@ -3004,7 +3031,10 @@ async function spGetSiteId2(siteUrl) {
   var sitePath = match[1];
   var r = await spCall('https://graph.microsoft.com/v1.0/sites/cercafe.sharepoint.com:' + sitePath);
   var d = await r.json();
-  if (!d.id) throw new Error('Sitio no encontrado: ' + siteUrl);
+  if (!d.id) {
+    var detail = d.error ? d.error.message : JSON.stringify(d).substring(0, 120);
+    throw new Error('Sitio no encontrado: ' + siteUrl + ' — ' + detail);
+  }
   return d.id;
 }
 
