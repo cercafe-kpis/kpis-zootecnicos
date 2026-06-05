@@ -2843,11 +2843,11 @@ async function spEnsureFolder(driveId, path) {
   var parentId = 'root';
   for (var i = 0; i < parts.length; i++) {
     var folderName = parts[i].trim();
-    // Intentar crear la carpeta
+    // Intentar crear la carpeta (conflictBehavior va en URL, no en body)
     var r = await spCall('https://graph.microsoft.com/v1.0/drives/'+driveId+'/items/'+parentId+'/children', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name:folderName, folder:{}, '@microsoft.graph.conflictBehavior':'ignore'})
+      body: JSON.stringify({name:folderName, folder:{}})
     });
     var d = null;
     // Graph API a veces devuelve 200/201 con body, o 200 sin id si ya existe
