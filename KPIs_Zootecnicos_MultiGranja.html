@@ -1948,11 +1948,20 @@ var BM_FMTS = {
 };
 
 function renderBM() {
-  var farms = Object.keys(allFarms);
+  var myFarms = Object.keys(allFarms);
   var bmEmpty = document.getElementById('bmEmpty');
   var bmContent = document.getElementById('bmContent');
-  document.getElementById('bmFarmCount').textContent = farms.length;
-  if (farms.length < 1) { bmEmpty.style.display='block'; bmContent.style.display='none'; return; }
+
+  // En modo asociado, usar globalBM para mostrar TODAS las granjas de la red
+  var globalData = window._globalBMData || {};
+  var isAsocMode = document.body.classList.contains('modo-asociado') && Object.keys(globalData).length > 0;
+
+  var totalFarms = isAsocMode
+    ? (Object.values(globalData)[0] || []).length
+    : myFarms.length;
+
+  document.getElementById('bmFarmCount').textContent = totalFarms + (isAsocMode ? ' (red completa)' : '');
+  if (myFarms.length < 1) { bmEmpty.style.display='block'; bmContent.style.display='none'; return; }
   bmEmpty.style.display = 'none'; bmContent.style.display = 'block';
 
   var kpiKey = document.getElementById('bmKpiSel').value;
@@ -1961,17 +1970,26 @@ function renderBM() {
   var kpiLabel = document.getElementById('bmKpiSel').options[document.getElementById('bmKpiSel').selectedIndex].text;
 
   var rows = [];
-  farms.forEach(function(f) {
-    var val = getVal(kpiKey, f);
-    if (val === null) return;
-    var col = bm ? semCol(kpiKey, val) : null;
-    // Get stock de madres activas como peso para el promedio ponderado
-    var stockW = getVal('pha', f);  // proxy: usar allFarms directamente
-    var av = allFarms[f] ? allFarms[f].allVars : [];
-    var sm = av.find(function(x){return x.name==='Stock medio de madres activas';});
-    var peso = (sm && sm.value) ? sm.value : 1;
-    rows.push({farm:f, val:val, col:col, peso:peso});
-  });
+
+  if (isAsocMode && globalData[kpiKey]) {
+    // Usar datos globales — todas las granjas de la red
+    globalData[kpiKey].forEach(function(entry) {
+      var col = bm ? semCol(kpiKey, entry.val) : null;
+      var isMine = myFarms.indexOf(entry.farm) >= 0;
+      rows.push({farm: entry.farm, val: entry.val, col: col, peso: 1, isMine: isMine, asociado: entry.asociado || ''});
+    });
+  } else {
+    // Modo admin — usar allFarms normal
+    myFarms.forEach(function(f) {
+      var val = getVal(kpiKey, f);
+      if (val === null) return;
+      var col = bm ? semCol(kpiKey, val) : null;
+      var av = allFarms[f] ? allFarms[f].allVars : [];
+      var sm = av.find(function(x){return x.name==='Stock medio de madres activas';});
+      var peso = (sm && sm.value) ? sm.value : 1;
+      rows.push({farm:f, val:val, col:col, peso:peso, isMine:true, asociado:''});
+    });
+  }
   if (bm) rows.sort(function(a,b){ return bm.hi ? b.val-a.val : a.val-b.val; });
 
   // Summary cards — promedio ponderado por stock de madres activas
@@ -1989,7 +2007,10 @@ function renderBM() {
   var labels = rows.map(function(r){return r.farm;});
   var data = rows.map(function(r){return r.val;});
   var colors = rows.map(function(r){
-    return r.col==='verde'?'rgba(21,128,61,.8)':r.col==='amarillo'?'rgba(217,119,6,.8)':'rgba(220,38,38,.8)';
+    var base = r.col==='verde'?'rgba(21,128,61,.8)':r.col==='amarillo'?'rgba(217,119,6,.8)':'rgba(220,38,38,.8)';
+    // Dim other farms slightly in asociado mode
+    if (!r.isMine) base = base.replace('.8)', '.35)');
+    return base;
   });
   var datasets = [{label: kpiLabel, data:data, backgroundColor:colors, borderWidth:1}];
   if (bm) datasets.push({label:'Meta TN Colombia', data:Array(data.length).fill(bm.opt), type:'line', borderColor:'#7b1010', borderWidth:2, borderDash:[6,3], pointRadius:0, fill:false});
@@ -2041,19 +2062,28 @@ function renderBM() {
   document.getElementById('bmChartTitle').textContent = 'Ranking: ' + kpiLabel;
 
   // Ranking table
-  var thtml = '<thead><tr><th>#</th><th>Granja</th><th>Valor</th><th>Estado vs TN</th></tr></thead><tbody>';
+  var thtml = '<thead><tr><th>#</th><th>Granja</th>' + (isAsocMode ? '<th>Asociado</th>' : '') + '<th>Valor</th><th>Estado vs TN</th></tr></thead><tbody>';
   thtml += rows.map(function(r,i) {
     var dc = r.col==='verde'?'#15803d':r.col==='amarillo'?'#d97706':'#dc2626';
     var cls = r.col==='verde'?'rv-ok':r.col==='amarillo'?'rv-warn':'rv-bad';
     var tag = r.col==='verde'?'OK':r.col==='amarillo'?'Alerta':'Crítico';
-    return '<tr><td class="rn">'+(i+1)+'</td><td class="rfn">'+r.farm+'</td>' +
+    var rowStyle = r.isMine ? ' style="background:#fff8f0;font-weight:700;"' : '';
+    var farmLabel = r.farm + (r.isMine ? ' ★' : '');
+    var asocCol = isAsocMode ? '<td style="font-size:11px;color:#6b7280;">'+r.asociado+'</td>' : '';
+    return '<tr'+rowStyle+'><td class="rn">'+(i+1)+'</td><td class="rfn">'+farmLabel+'</td>' +
+      asocCol +
       '<td class="'+cls+'">'+r.val.toFixed(fmt)+'</td>' +
       '<td><span class="sdot" style="background:'+dc+'"></span>'+tag+'</td></tr>';
   }).join('');
   document.getElementById('bmTable').innerHTML = thtml + '</tbody>';
 
-  // Heatmap
-  renderHeatmap(farms);
+  // Heatmap — en modo asociado mostrar todas las granjas de la red
+  if (isAsocMode && globalData['pha']) {
+    var allNetFarms = globalData['pha'].map(function(e){ return e.farm; });
+    renderHeatmap(allNetFarms, myFarms);
+  } else {
+    renderHeatmap(myFarms, myFarms);
+  }
 }
 
 var HM_KPIS = [
@@ -2065,12 +2095,15 @@ var HM_KPIS = [
   {k:'gpd3',lbl:'GPD S3'},{k:'ca3',lbl:'CA S3'},{k:'mort3',lbl:'Mort.S3'}
 ];
 
-function renderHeatmap(farms) {
+function renderHeatmap(farms, ownFarms) {
+  ownFarms = ownFarms || farms;
   var html = '<table class="hm-tbl"><thead><tr><th class="hm-farm">Granja</th>';
   HM_KPIS.forEach(function(h){html += '<th title="'+h.k+'">'+h.lbl+'</th>';});
   html += '</tr></thead><tbody>';
   farms.forEach(function(f) {
-    html += '<tr><td class="hm-farm">'+f+'</td>';
+    var isMine = ownFarms.indexOf(f) >= 0;
+    var rowStyle = isMine ? ' style="background:#fff8f0;"' : '';
+    html += '<tr'+rowStyle+'><td class="hm-farm">'+(isMine?'★ ':'')+f+'</td>';
     HM_KPIS.forEach(function(h) {
       var val = getVal(h.k, f);
       var col = val!==null ? semCol(h.k, val) : null;
