@@ -245,7 +245,11 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
 
 <div id="asocBanner" style="display:none;background:#f5e8e8;border-bottom:2px solid #7b1010;padding:6px 20px;font-size:12px;color:#7b1010;font-weight:600;display:flex;align-items:center;gap:8px;">
   <span>📊 Vista Asociado: <span id="asocBannerName"></span> — Solo lectura · Datos procesados por Cercafe</span>
-  <a id="hubBtn" href="#" target="_blank" style="margin-left:auto;background:#7b1010;color:#fff;border-radius:6px;padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;">🏠 Abrir Tu.HUB ↗</a>
+  <div id="periodoSelectorWrap" style="display:none;margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <span style="font-size:11px;color:#7b1010;">📅 Período:</span>
+    <select id="periodoSelector" onchange="cambiarPeriodo(this.value)" style="font-size:11px;border:1px solid #7b1010;border-radius:5px;padding:3px 8px;color:#7b1010;background:#fff;cursor:pointer;"></select>
+  </div>
+  <a id="hubBtn" href="#" target="_blank" style="background:#7b1010;color:#fff;border-radius:6px;padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;">🏠 Abrir Tu.HUB ↗</a>
 </div>
 <div class="modebar">
   <button class="mbtn on" id="modeIndBtn" onclick="setMode('ind')">🏠 Análisis por granja</button>
@@ -2611,7 +2615,11 @@ window.addEventListener('load', function() {
   }
 });
 
-async function cargarDatosAsociado(asocName) {
+// Global state for period navigation
+var _spDriveId = null;
+var _spAsocName = null;
+
+async function cargarDatosAsociado(asocName, filename) {
   var info = ASOCIADOS[asocName];
   if (!info) {
     mostrarMsgAsociado('No se encontro configuracion para el asociado: ' + asocName, '#dc2626');
@@ -2629,14 +2637,17 @@ async function cargarDatosAsociado(asocName) {
   }
 
   try {
-    // Get siteId -> driveId -> file content
-    mostrarMsgAsociado('Conectando con SharePoint...', '#0078d4');
-    var siteId  = await spGetSiteId2(info.sp);
-    var driveId = await spGetDriveId(siteId);
+    // Get siteId -> driveId (cache driveId for period switching)
+    if (!_spDriveId || _spAsocName !== asocName) {
+      mostrarMsgAsociado('Conectando con SharePoint...', '#0078d4');
+      var siteId  = await spGetSiteId2(info.sp);
+      _spDriveId  = await spGetDriveId(siteId);
+      _spAsocName = asocName;
+    }
 
-    // Use drives/{driveId}/root:/{path}:/content — most reliable Graph API form
-    var graphUrl = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
-      '/root:/KPIs%20Zootecnicos/kpis_data.json:/content';
+    var targetFile = filename || 'kpis_data.json';
+    var graphUrl = 'https://graph.microsoft.com/v1.0/drives/' + _spDriveId +
+      '/root:/KPIs%20Zootecnicos/' + encodeURIComponent(targetFile) + ':/content';
 
     mostrarMsgAsociado('Descargando datos...', '#0078d4');
     var r = await spCall(graphUrl);
@@ -2654,9 +2665,53 @@ async function cargarDatosAsociado(asocName) {
     var data = await r.json();
     cargarDataEnApp(data, asocName);
 
+    // List all available periods from SharePoint folder
+    if (!filename) listarPeriodos(asocName, targetFile);
+
   } catch(e) {
     mostrarMsgAsociado('Error al cargar datos: ' + e.message, '#dc2626');
   }
+}
+
+async function listarPeriodos(asocName, currentFile) {
+  try {
+    var listUrl = 'https://graph.microsoft.com/v1.0/drives/' + _spDriveId +
+      '/root:/KPIs%20Zootecnicos:/children?$select=name,lastModifiedDateTime&$orderby=lastModifiedDateTime desc';
+    var r = await spCall(listUrl);
+    if (!r.ok) return;
+    var d = await r.json();
+    var files = (d.value || []).filter(function(f) {
+      return f.name && f.name.startsWith('kpis_data') && f.name.endsWith('.json');
+    });
+    if (files.length <= 1) return; // Solo el actual, no mostrar selector
+
+    var sel = document.getElementById('periodoSelector');
+    var wrap = document.getElementById('periodoSelectorWrap');
+    if (!sel || !wrap) return;
+
+    sel.innerHTML = '';
+    files.forEach(function(f) {
+      var opt = document.createElement('option');
+      opt.value = f.name;
+      // Format label: kpis_data.json -> "Más reciente", kpis_data_01-01-2026_—_30-04-2026.json -> "01-01-2026 — 30-04-2026"
+      if (f.name === 'kpis_data.json') {
+        opt.textContent = '⭐ Más reciente';
+      } else {
+        var label = f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ');
+        opt.textContent = label;
+      }
+      opt.selected = (f.name === currentFile);
+      sel.appendChild(opt);
+    });
+    wrap.style.display = 'flex';
+  } catch(e) {
+    console.warn('No se pudo listar periodos:', e);
+  }
+}
+
+async function cambiarPeriodo(filename) {
+  if (!_spAsocName) return;
+  await cargarDatosAsociado(_spAsocName, filename);
 }
 
 function mostrarMsgAsociado(msg, color) {
