@@ -164,7 +164,7 @@ table.vt tr:hover td{background:#fafbff;}
 .bm-sk{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
 .bm-sv{font-size:22px;font-weight:800;}
 .bm-ss{font-size:11px;color:#6b7280;margin-top:4px;}
-.chart-wrap{position:relative;height:320px;margin-top:10px;}
+.chart-wrap{position:relative;height:320px;min-height:300px;margin-top:10px;}
 .rank-tbl{width:100%;border-collapse:collapse;}
 .rank-tbl th{padding:8px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;background:#f8f9fa;border-bottom:2px solid #eee;text-align:left;}
 .rank-tbl td{padding:7px 14px;font-size:13px;border-bottom:1px solid #f3f4f6;}
@@ -433,35 +433,40 @@ var allFarms = {};
 var ADMIN_EMAIL = 'nathalia.monedero@cercafe.com.co';
 
 var TABLA_MAESTRA = [
-  {granja:'Granja El Ruby',       asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn', hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Buenos Aires',         asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2', hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx', destete:28},
-  {granja:'El Treból – Magro SA', asociado:'HBM',             sp:'https://cercafe.sharepoint.com/sites/TuHubHBM',                     destete:28},
-  {granja:'Pontevedra',           asociado:'AGROCERDOS',      sp:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS', hub:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Chambacu',             asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2', hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx', destete:28},
-  {granja:'Campeón',              asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon', hub:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Corcega Cría',         asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2', hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx', destete:28},
-  {granja:'CRECERDOS',            asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon', hub:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'El Bosque',            asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2', hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx', destete:28},
-  {granja:'Granja Fátima',        asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn', hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Guaymaral',            asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2', hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx', destete:28},
-  {granja:'La Cecilia',           asociado:'AGRO JABAR',      sp:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES', destete:28},
-  {granja:'La Estrella',          asociado:'AGRO JABAR',      sp:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES', destete:28},
-  {granja:'La Fabiola',           asociado:'HBM',             sp:'https://cercafe.sharepoint.com/sites/TuHubHBM',                     destete:28},
-  {granja:'La Virtud',            asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon', hub:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Meseta',               asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn', hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Salamanca',            asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2', hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx', destete:28},
-  {granja:'San Antonio',          asociado:'AGROCERDOS',      sp:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS', hub:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS/SitePages/human-resource-home.aspx', destete:21},
-  {granja:'Sierramorena',         asociado:'GAM',             sp:'https://cercafe.sharepoint.com/sites/TuHubPIGAM',                   destete:21},
-  {granja:'Ciberita',             asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn', hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx', destete:21}
+  {granja:'Granja El Ruby',       nombre:'El Ruby',        asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn',           hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx',           destete:21},
+  {granja:'Buenos Aires',         nombre:'Buenos Aires',   asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2',                      hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx',                      destete:28},
+  {granja:'El Treból – Magro SA', nombre:'El Trebol',      asociado:'HBM',             sp:'https://cercafe.sharepoint.com/sites/TuHubHBM',                     hub:'https://cercafe.sharepoint.com/sites/TuHubHBM',                                                       destete:28},
+  {granja:'Pontevedra',           nombre:'Pontevedra',     asociado:'AGROCERDOS',      sp:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS',            hub:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS/SitePages/human-resource-home.aspx',            destete:21},
+  {granja:'Chambacu',             nombre:'Chambacú',       asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2',                      hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx',                      destete:28},
+  {granja:'Campeón',              nombre:'Campeón',        asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon',                 hub:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon/SitePages/human-resource-home.aspx',                 destete:21},
+  {granja:'Corcega Cría',         nombre:'Corcega Cría',   asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2',                      hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx',                      destete:28},
+  {granja:'CRECERDOS',            nombre:'Crecerdos',      asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon',                 hub:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon/SitePages/human-resource-home.aspx',                 destete:21},
+  {granja:'El Bosque',            nombre:'El Bosque',      asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2',                      hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx',                      destete:28},
+  {granja:'Granja Fátima',        nombre:'Fátima',         asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn',           hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx',           destete:21},
+  {granja:'Guaymaral',            nombre:'Guaymaral',      asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2',                      hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx',                      destete:28},
+  {granja:'La Cecilia',           nombre:'La Cecilia',     asociado:'AGRO JABAR',      sp:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES', hub:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES',                                   destete:28},
+  {granja:'La Estrella',          nombre:'La Estrella',    asociado:'AGRO JABAR',      sp:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES', hub:'https://cercafe.sharepoint.com/sites/TuHubAGROJABAR-AGROVERSALLES',                                   destete:28},
+  {granja:'La Fabiola',           nombre:'La Fabiola',     asociado:'HBM',             sp:'https://cercafe.sharepoint.com/sites/TuHubHBM',                     hub:'https://cercafe.sharepoint.com/sites/TuHubHBM',                                                       destete:28},
+  {granja:'La Virtud',            nombre:'La Virtud',      asociado:'CAMPEON',         sp:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon',                 hub:'https://cercafe.sharepoint.com/sites/Tu.HubCampeon/SitePages/human-resource-home.aspx',                 destete:21},
+  {granja:'Meseta',               nombre:'Meseta',         asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn',           hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx',           destete:21},
+  {granja:'Salamanca',            nombre:'Salamanca',      asociado:'CER',             sp:'https://cercafe.sharepoint.com/sites/Tu.HUB2',                      hub:'https://cercafe.sharepoint.com/sites/Tu.HUB2/SitePages/human-resource-home.aspx',                      destete:28},
+  {granja:'San Antonio',          nombre:'San Antonio',    asociado:'AGROCERDOS',      sp:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS',            hub:'https://cercafe.sharepoint.com/sites/TU.HUB.AGROCERDOS/SitePages/human-resource-home.aspx',            destete:21},
+  {granja:'Sierramorena',         nombre:'Sierramorena',   asociado:'GAM',             sp:'https://cercafe.sharepoint.com/sites/TuHubPIGAM',                   hub:'https://cercafe.sharepoint.com/sites/TuHubPIGAM',                                                     destete:21},
+  {granja:'Ciberita',             nombre:'Ciberita',       asociado:'CERDOS DEL OTUN', sp:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn',           hub:'https://cercafe.sharepoint.com/sites/TU.HUBCerdosdelOtn/SitePages/human-resource-home.aspx',           destete:21}
 ];
 
 var ASOCIADOS = {};
 var DESTETE_MAP = {};
+var NOMBRE_MAP = {}; // granja (Agriness key) -> nombre Cercafe para mostrar
 TABLA_MAESTRA.forEach(function(r) {
   if (!ASOCIADOS[r.asociado]) ASOCIADOS[r.asociado] = {sp: r.sp, hub: r.hub || r.sp, granjas: []};
   ASOCIADOS[r.asociado].granjas.push(r.granja);
   DESTETE_MAP[r.granja] = r.destete;
+  NOMBRE_MAP[r.granja] = r.nombre || r.granja;
 });
+
+// Helper: get display name for a farm key
+function nombreGranja(key) { return NOMBRE_MAP[key] || key; }
 
 var asociadoFiltro = 'Todos';
 
@@ -786,7 +791,7 @@ function finalizeLoad() {
   names.forEach(function(n) {
     var opt = document.createElement('option');
     opt.value = n;
-    opt.textContent = n;
+    opt.textContent = nombreGranja(n);
     sel.appendChild(opt);
   });
 
@@ -845,7 +850,7 @@ function renderChips() {
     chip.title = n;
     var gInfo = getGranjaInfo(n);
     var span = document.createElement('span');
-    span.textContent = dot + ' ' + n + (gInfo ? ' ['+gInfo.asociado+']' : '');
+    span.textContent = dot + ' ' + nombreGranja(n) + (gInfo ? ' ['+gInfo.asociado+']' : '');
     var cx = document.createElement('span');
     cx.className = 'cx';
     cx.textContent = ' ×';
@@ -914,7 +919,7 @@ function renderData() {
   var rojos = criticos.filter(function(c){return c.col==='rojo';}).length;
   var amars = criticos.filter(function(c){return c.col==='amarillo';}).length;
   document.getElementById('sr').innerHTML =
-    '<div class="sbox c1"><span class="sv" style="font-size:17px">' + farmName + '</span><div class="sl">Granja</div></div>' +
+    '<div class="sbox c1"><span class="sv" style="font-size:17px">' + nombreGranja(farmName) + '</span><div class="sl">Granja</div></div>' +
     '<div class="sbox c2"><span class="sv">' + allVars.length + '</span><div class="sl">Variables</div></div>' +
     '<div class="sbox c3"><span class="sv">' + rojos + '</span><div class="sl">Críticos vs TN</div></div>' +
     '<div class="sbox c4"><span class="sv">' + amars + '</span><div class="sl">En alerta</div></div>';
@@ -1389,7 +1394,7 @@ function finalizeLoad() {
   names.forEach(function(n) {
     var opt = document.createElement('option');
     opt.value = n;
-    opt.textContent = n;
+    opt.textContent = nombreGranja(n);
     sel.appendChild(opt);
   });
 
@@ -1448,7 +1453,7 @@ function renderChips() {
     chip.title = n;
     var gInfo = getGranjaInfo(n);
     var span = document.createElement('span');
-    span.textContent = dot + ' ' + n + (gInfo ? ' ['+gInfo.asociado+']' : '');
+    span.textContent = dot + ' ' + nombreGranja(n) + (gInfo ? ' ['+gInfo.asociado+']' : '');
     var cx = document.createElement('span');
     cx.className = 'cx';
     cx.textContent = ' ×';
@@ -1517,7 +1522,7 @@ function renderData() {
   var rojos = criticos.filter(function(c){return c.col==='rojo';}).length;
   var amars = criticos.filter(function(c){return c.col==='amarillo';}).length;
   document.getElementById('sr').innerHTML =
-    '<div class="sbox c1"><span class="sv" style="font-size:17px">' + farmName + '</span><div class="sl">Granja</div></div>' +
+    '<div class="sbox c1"><span class="sv" style="font-size:17px">' + nombreGranja(farmName) + '</span><div class="sl">Granja</div></div>' +
     '<div class="sbox c2"><span class="sv">' + allVars.length + '</span><div class="sl">Variables</div></div>' +
     '<div class="sbox c3"><span class="sv">' + rojos + '</span><div class="sl">Críticos vs TN</div></div>' +
     '<div class="sbox c4"><span class="sv">' + amars + '</span><div class="sl">En alerta</div></div>';
@@ -1893,7 +1898,7 @@ function renderBM() {
       if (_filtTamano !== 'todos' && getTamanoGranja(entry.farm) !== _filtTamano) return;
       var col = bm ? semCol(kpiKey, entry.val) : null;
       var isMine = myFarms.indexOf(entry.farm) >= 0;
-      rows.push({farm: entry.farm, val: entry.val, col: col, peso: 1, isMine: isMine, asociado: entry.asociado || '', destete: DESTETE_MAP[entry.farm] || ''});
+      rows.push({farm: entry.farm, nombre: nombreGranja(entry.farm), val: entry.val, col: col, peso: 1, isMine: isMine, asociado: entry.asociado || '', destete: DESTETE_MAP[entry.farm] || ''});
     });
   } else {
     // Modo admin — usar allFarms normal
@@ -1906,7 +1911,7 @@ function renderBM() {
       var av = allFarms[f] ? allFarms[f].allVars : [];
       var sm = av.find(function(x){return x.name==='Stock medio de madres activas';});
       var peso = (sm && sm.value) ? sm.value : 1;
-      rows.push({farm:f, val:val, col:col, peso:peso, isMine:true, asociado:'', destete: DESTETE_MAP[f] || ''});
+      rows.push({farm:f, nombre:nombreGranja(f), val:val, col:col, peso:peso, isMine:true, asociado:'', destete: DESTETE_MAP[f] || ''});
     });
   }
   if (bm) rows.sort(function(a,b){ return bm.hi ? b.val-a.val : a.val-b.val; });
@@ -1916,14 +1921,17 @@ function renderBM() {
   var sumPeso = rows.reduce(function(s,r){return s+r.peso;},0) || 1;
   var avg = rows.reduce(function(s,r){return s + r.val*r.peso;},0) / sumPeso;
   document.getElementById('bmSum').innerHTML =
-    '<div class="bm-sc"><div class="bm-sk">🏆 Mejor granja</div><div class="bm-sv" style="color:#15803d">'+(best?best.farm:'—')+'</div><div class="bm-ss">'+(best?best.val.toFixed(fmt):'')+'</div></div>' +
+    '<div class="bm-sc"><div class="bm-sk">🏆 Mejor granja</div><div class="bm-sv" style="color:#15803d">'+(best?(best.nombre||best.farm):'—')+'</div><div class="bm-ss">'+(best?best.val.toFixed(fmt):'')+'</div></div>' +
     '<div class="bm-sc"><div class="bm-sk">📊 Promedio red</div><div class="bm-sv" style="color:#1060a8">'+avg.toFixed(fmt)+'</div><div class="bm-ss">'+rows.length+' granjas · ponderado por madres</div></div>' +
-    '<div class="bm-sc"><div class="bm-sk">⚠ Más rezagada</div><div class="bm-sv" style="color:#dc2626">'+(worst?worst.farm:'—')+'</div><div class="bm-ss">'+(worst?worst.val.toFixed(fmt):'')+'</div></div>' +
+    '<div class="bm-sc"><div class="bm-sk">⚠ Más rezagada</div><div class="bm-sv" style="color:#dc2626">'+(worst?(worst.nombre||worst.farm):'—')+'</div><div class="bm-ss">'+(worst?worst.val.toFixed(fmt):'')+'</div></div>' +
     '<div class="bm-sc"><div class="bm-sk">🎯 Meta TN Colombia</div><div class="bm-sv" style="color:#7b1010">'+(bm?(bm.hi?'>':'<')+bm.opt:'—')+'</div><div class="bm-ss">'+(bm?bm.fu:'')+'</div></div>';
 
   // Chart
   if (bmChart) { bmChart.destroy(); bmChart = null; }
-  var labels = rows.map(function(r){return r.farm;});
+  // Adjust canvas height based on number of farms (38px per bar, min 300)
+  var chartWrap = document.getElementById('bmChart').parentElement;
+  chartWrap.style.height = Math.max(300, rows.length * 38) + 'px';
+  var labels = rows.map(function(r){return r.nombre || r.farm;});
   var data = rows.map(function(r){return r.val;});
   var colors = rows.map(function(r){
     var base = r.col==='verde'?'rgba(21,128,61,.8)':r.col==='amarillo'?'rgba(217,119,6,.8)':'rgba(220,38,38,.8)';
@@ -1987,7 +1995,7 @@ function renderBM() {
     var cls = r.col==='verde'?'rv-ok':r.col==='amarillo'?'rv-warn':'rv-bad';
     var tag = r.col==='verde'?'OK':r.col==='amarillo'?'Alerta':'Crítico';
     var rowStyle = r.isMine ? ' style="background:#fff8f0;font-weight:700;"' : '';
-    var farmLabel = r.farm + (r.isMine ? ' ★' : '');
+    var farmLabel = (r.nombre || r.farm) + (r.isMine ? ' ★' : '');
     var asocCol = isAsocMode ? '<td style="font-size:11px;color:#6b7280;">'+r.asociado+'</td>' : '';
     return '<tr'+rowStyle+'><td class="rn">'+(i+1)+'</td><td class="rfn">'+farmLabel+'</td>' +
       asocCol +
@@ -2027,7 +2035,7 @@ function renderHeatmap(farms, ownFarms) {
   farms.forEach(function(f) {
     var isMine = ownFarms.indexOf(f) >= 0;
     var rowStyle = isMine ? ' style="background:#fff8f0;"' : '';
-    html += '<tr'+rowStyle+'><td class="hm-farm">'+(isMine?'★ ':'')+f+'</td>';
+    html += '<tr'+rowStyle+'><td class="hm-farm">'+(isMine?'★ ':'')+nombreGranja(f)+'</td>';
     var globalData = window._globalBMData || {};
     HM_KPIS.forEach(function(h) {
       // In asociado mode use globalBM data; fallback to getVal for admin mode
@@ -3179,7 +3187,7 @@ function filterByAsociado(asoc) {
   sel.innerHTML = '';
   farms.forEach(function(f){
     var opt = document.createElement('option');
-    opt.value = f; opt.textContent = f;
+    opt.value = f; opt.textContent = nombreGranja(f);
     sel.appendChild(opt);
   });
   if (farms.length) selectFarm(farms[0]);
