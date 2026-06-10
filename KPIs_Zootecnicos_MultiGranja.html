@@ -387,6 +387,12 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
           <button id="filtDest21" onclick="setFiltDestete(21)" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">Destete 21d</button>
           <button id="filtDest28" onclick="setFiltDestete(28)" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">Destete 28d</button>
         </div>
+        <div style="display:flex;gap:3px;">
+          <button id="filtTamTodos" onclick="setFiltTamano('todos')" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid #15803d;background:#15803d;color:#fff;cursor:pointer;font-weight:700;">Todos</button>
+          <button id="filtTam1" onclick="setFiltTamano('pequena')" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">30–140 hembras</button>
+          <button id="filtTam2" onclick="setFiltTamano('mediana')" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">141–400 hembras</button>
+          <button id="filtTam3" onclick="setFiltTamano('grande')" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">&gt;400 hembras</button>
+        </div>
         <select id="bmKpiSel" onchange="renderBM()" style="background:#fff;border:1px solid #dde1e7;border-radius:4px;padding:5px 10px;font-size:13px;min-width:220px;">
         <option value="pha">Partos / Hembra / Año</option>
         <option value="dha">Destetados / Hembra / Año</option>
@@ -610,6 +616,13 @@ var MSG = {
 
 // KPI getter from a farm name
 function getVal(bmk, fname) {
+  if (bmk === 'stockFinal') {
+    var av0 = allFarms[fname] ? allFarms[fname].allVars : allVars;
+    var sf0 = av0.find(function(x){ return x.name === 'Stock final de madres activas'; });
+    if (sf0) return sf0.value;
+    var sm0 = av0.find(function(x){ return x.name === 'Stock medio de madres activas'; });
+    return sm0 ? sm0.value : null;
+  }
   var av = allFarms[fname] ? allFarms[fname].allVars : allVars;
   function gv(n) { var v = av.find(function(x){return x.name===n;}); return v?v.value:null; }
   function gm(n) { var v = av.find(function(x){return x.name===n;}); return v&&v.med!=null?v.med:null; }
@@ -713,6 +726,29 @@ function parseWb(wb) {
   var rd = {};
   var cur = null;
   var matSub = '';  // sub-bloque activo dentro de Maternidad: '' | 'Nacimientos' | 'Destetados'
+
+  // Leer Stock Final de Madres activas desde la tabla de movimiento de plantel (filas 2-12)
+  // Fila 3 (r=2): cabeceras — buscar columna "Stock Final"
+  // Fila con "Madre act" en col A: leer el valor de esa columna
+  var stockFinalCol = -1;
+  for (var c = 0; c <= 20; c++) {
+    var hdr = String(cv(ws, 2, c) || '').trim();
+    if (hdr === 'Stock Final') { stockFinalCol = c; break; }
+  }
+  if (stockFinalCol >= 0) {
+    for (var r2 = 3; r2 <= 13; r2++) {
+      var rowLabel = String(cv(ws, r2, 0) || '').trim();
+      if (rowLabel.toLowerCase().startsWith('madre act')) {
+        var sfVal = pn(cv(ws, r2, stockFinalCol));
+        if (sfVal !== null) {
+          if (!rd['Plantel reproductivo']) rd['Plantel reproductivo'] = [];
+          rd['Plantel reproductivo'].push({name: 'Stock final de madres activas', value: sfVal, pct: null, med: null});
+        }
+        break;
+      }
+    }
+  }
+
   for (var r = 14; r <= rng.e.r; r++) {
     var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2);
     if (a == null) continue;
@@ -1402,6 +1438,29 @@ function parseWb(wb) {
   var rd = {};
   var cur = null;
   var matSub = '';  // sub-bloque activo dentro de Maternidad: '' | 'Nacimientos' | 'Destetados'
+
+  // Leer Stock Final de Madres activas desde la tabla de movimiento de plantel (filas 2-12)
+  // Fila 3 (r=2): cabeceras — buscar columna "Stock Final"
+  // Fila con "Madre act" en col A: leer el valor de esa columna
+  var stockFinalCol = -1;
+  for (var c = 0; c <= 20; c++) {
+    var hdr = String(cv(ws, 2, c) || '').trim();
+    if (hdr === 'Stock Final') { stockFinalCol = c; break; }
+  }
+  if (stockFinalCol >= 0) {
+    for (var r2 = 3; r2 <= 13; r2++) {
+      var rowLabel = String(cv(ws, r2, 0) || '').trim();
+      if (rowLabel.toLowerCase().startsWith('madre act')) {
+        var sfVal = pn(cv(ws, r2, stockFinalCol));
+        if (sfVal !== null) {
+          if (!rd['Plantel reproductivo']) rd['Plantel reproductivo'] = [];
+          rd['Plantel reproductivo'].push({name: 'Stock final de madres activas', value: sfVal, pct: null, med: null});
+        }
+        break;
+      }
+    }
+  }
+
   for (var r = 14; r <= rng.e.r; r++) {
     var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2);
     if (a == null) continue;
@@ -1963,6 +2022,50 @@ var BM_FMTS = {
 };
 
 var _filtDestete = 'todos'; // 'todos', 21, 28
+var _filtTamano = 'todos';  // 'todos', 'pequena' (30-140), 'mediana' (141-400), 'grande' (>400)
+
+function getTamanoGranja(fname) {
+  // Get stock final from globalBM or allFarms
+  var stockFinal = null;
+  var globalData = window._globalBMData || {};
+  if (globalData['stockFinal']) {
+    var entry = globalData['stockFinal'].find(function(e){ return e.farm === fname; });
+    if (entry) stockFinal = entry.val;
+  }
+  if (stockFinal === null) {
+    var av = allFarms[fname] ? allFarms[fname].allVars : [];
+    var sf = av.find(function(x){ return x.name === 'Stock final de madres activas'; });
+    if (sf) stockFinal = sf.value;
+    // fallback to stock medio
+    if (stockFinal === null) {
+      var sm = av.find(function(x){ return x.name === 'Stock medio de madres activas'; });
+      if (sm) stockFinal = sm.value;
+    }
+  }
+  if (stockFinal === null) return null;
+  if (stockFinal <= 140) return 'pequena';
+  if (stockFinal <= 400) return 'mediana';
+  return 'grande';
+}
+
+function setFiltTamano(val) {
+  _filtTamano = val;
+  var btns = {
+    'todos':   {id:'filtTamTodos',  bg:'#15803d'},
+    'pequena': {id:'filtTam1', bg:'#15803d'},
+    'mediana': {id:'filtTam2', bg:'#15803d'},
+    'grande':  {id:'filtTam3', bg:'#15803d'}
+  };
+  Object.keys(btns).forEach(function(k) {
+    var el = document.getElementById(btns[k].id);
+    if (!el) return;
+    var active = (k === val);
+    el.style.background   = active ? btns[k].bg : '#fff';
+    el.style.color        = active ? '#fff' : '#374151';
+    el.style.borderColor  = active ? btns[k].bg : '#d1d5db';
+  });
+  renderBM();
+}
 
 function setFiltDestete(val) {
   _filtDestete = val;
@@ -2007,6 +2110,7 @@ function renderBM() {
     // Usar datos globales — todas las granjas de la red
     globalData[kpiKey].forEach(function(entry) {
       if (_filtDestete !== 'todos' && DESTETE_MAP[entry.farm] !== _filtDestete) return;
+      if (_filtTamano !== 'todos' && getTamanoGranja(entry.farm) !== _filtTamano) return;
       var col = bm ? semCol(kpiKey, entry.val) : null;
       var isMine = myFarms.indexOf(entry.farm) >= 0;
       rows.push({farm: entry.farm, val: entry.val, col: col, peso: 1, isMine: isMine, asociado: entry.asociado || '', destete: DESTETE_MAP[entry.farm] || ''});
@@ -2015,6 +2119,7 @@ function renderBM() {
     // Modo admin — usar allFarms normal
     myFarms.forEach(function(f) {
       if (_filtDestete !== 'todos' && DESTETE_MAP[f] !== _filtDestete) return;
+      if (_filtTamano !== 'todos' && getTamanoGranja(f) !== _filtTamano) return;
       var val = getVal(kpiKey, f);
       if (val === null) return;
       var col = bm ? semCol(kpiKey, val) : null;
@@ -2115,10 +2220,14 @@ function renderBM() {
   if (isAsocMode && globalData['pha']) {
     var allNetFarms = globalData['pha']
       .filter(function(e){ return _filtDestete === 'todos' || DESTETE_MAP[e.farm] === _filtDestete; })
+      .filter(function(e){ return _filtTamano === 'todos' || getTamanoGranja(e.farm) === _filtTamano; })
       .map(function(e){ return e.farm; });
     renderHeatmap(allNetFarms, myFarms);
   } else {
-    var filteredFarms = myFarms.filter(function(f){ return _filtDestete === 'todos' || DESTETE_MAP[f] === _filtDestete; });
+    var filteredFarms = myFarms.filter(function(f){
+      return (_filtDestete === 'todos' || DESTETE_MAP[f] === _filtDestete) &&
+             (_filtTamano === 'todos' || getTamanoGranja(f) === _filtTamano);
+    });
     renderHeatmap(filteredFarms, filteredFarms);
   }
 }
@@ -3106,6 +3215,7 @@ function buildAsocJSON(asocName) {
   // Build benchmarking data for ALL farms (global) — includes BM keys + HM keys
   var globalBM = {};
   var allBMKeys = Object.keys(BM).concat(HM_KPIS.map(function(h){return h.k;}));
+  allBMKeys.push('stockFinal');  // include stock final for tamaño filter
   // deduplicate
   allBMKeys = allBMKeys.filter(function(k,i){return allBMKeys.indexOf(k)===i;});
   allBMKeys.forEach(function(key) {
