@@ -598,6 +598,7 @@ function getVal(bmk, fname) {
   var av = allFarms[fname] ? allFarms[fname].allVars : allVars;
   function gv(n) { var v = av.find(function(x){return x.name===n;}); return v?v.value:null; }
   function gm(n) { var v = av.find(function(x){return x.name===n;}); return v&&v.med!=null?v.med:null; }
+  function gp(n) { var v = av.find(function(x){return x.name===n;}); return v&&v.pct!=null?v.pct:null; }
   function gs(n,s) { var v = av.find(function(x){return x.name===n&&x.seg===s;}); return v?v.value:null; }
   var lDes, muerL;
   switch(bmk) {
@@ -607,7 +608,7 @@ function getVal(bmk, fname) {
     case 'ip':   return gv('Intervalo entre Partos');
     case 'dnp':  return gv('Media de días no productivos');
     case 'ds':   return gv('Destete - Servicio');
-    case 'rep':  return gv('Repetición de celo');
+    case 'rep':  return gp('Repetición de celo');
     case 'nv':      return gm('Vivos') || gv('Vivos');
     case 'nacTot':  return gv('Promedio nacidos totales/camada');  // Promedio nacidos totales/camada (col D fila Total)
     case 'destCam': return gm('Destetados relac. dest.');  // Media destetados/camada (col D del reporte Agriness)
