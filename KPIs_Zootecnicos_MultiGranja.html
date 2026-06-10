@@ -931,15 +931,14 @@ function renderData() {
     var hasPct = vars.some(function(v){return v.pct!==null;});
     var hasMed = vars.some(function(v){return v.med!=null;});
     html += '<div class="seg-hd"><div class="seg-dot" style="background:'+col+'"></div><div class="seg-nm">'+seg+'</div><div class="seg-ct">'+vars.length+' vars</div></div>';
-    html += '<table class="vt"><thead><tr><th>Variable</th><th class="r">Valor</th>'+(hasPct?'<th class="r">%</th>':'')+(hasMed?'<th class="r" style="color:#7b1010;font-weight:700;">Media/camada</th>':'')+'<th>Fuente benchmark</th></tr></thead><tbody>';
+    html += '<table class="vt"><thead><tr><th>Variable</th><th class="r">Valor</th>'+(hasPct?'<th class="r">%</th>':'')+(hasMed?'<th class="r" style="color:#7b1010;font-weight:700;">Media/camada</th>':'')+'</tr></thead><tbody>';
     vars.forEach(function(v) {
       var bmkKey = varToBmk(v.name, seg);
       var bval = getVal(bmkKey, activeFarm);
       var col2 = bmkKey ? semCol(bmkKey, bval) : null;
       var dotHtml = col2 ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(col2==='verde'?'#15803d':col2==='amarillo'?'#d97706':'#dc2626')+';margin-right:5px;"></span>' : '';
       var bm = bmkKey ? BM[bmkKey] : null;
-      var fuHtml = bm ? '<span style="font-size:10px;color:#9ca3af;">'+bm.fu+'</span>' : '<span style="color:#e5e7eb;">—</span>';
-      html += '<tr><td>'+dotHtml+v.name+'</td><td class="vv">'+(v.value!==null?fn(v.value):'—')+'</td>'+(hasPct?'<td class="vp">'+(v.pct!==null?fn(v.pct)+'%':'')+'</td>':'')+(hasMed?'<td class="r" style="color:#7b1010;font-weight:700;">'+(v.med!=null?fn(v.med):'')+'</td>':'')+'<td>'+fuHtml+'</td></tr>';
+      html += '<tr><td>'+dotHtml+v.name+'</td><td class="vv">'+(v.value!==null?fn(v.value):'—')+'</td>'+(hasPct?'<td class="vp">'+(v.pct!==null?fn(v.pct)+'%':'')+'</td>':'')+(hasMed?'<td class="r" style="color:#7b1010;font-weight:700;">'+(v.med!=null?fn(v.med):'')+'</td>':'')+'</tr>';
     });
     html += '</tbody></table>';
   }
@@ -1534,15 +1533,14 @@ function renderData() {
     var hasPct = vars.some(function(v){return v.pct!==null;});
     var hasMed = vars.some(function(v){return v.med!=null;});
     html += '<div class="seg-hd"><div class="seg-dot" style="background:'+col+'"></div><div class="seg-nm">'+seg+'</div><div class="seg-ct">'+vars.length+' vars</div></div>';
-    html += '<table class="vt"><thead><tr><th>Variable</th><th class="r">Valor</th>'+(hasPct?'<th class="r">%</th>':'')+(hasMed?'<th class="r" style="color:#7b1010;font-weight:700;">Media/camada</th>':'')+'<th>Fuente benchmark</th></tr></thead><tbody>';
+    html += '<table class="vt"><thead><tr><th>Variable</th><th class="r">Valor</th>'+(hasPct?'<th class="r">%</th>':'')+(hasMed?'<th class="r" style="color:#7b1010;font-weight:700;">Media/camada</th>':'')+'</tr></thead><tbody>';
     vars.forEach(function(v) {
       var bmkKey = varToBmk(v.name, seg);
       var bval = getVal(bmkKey, activeFarm);
       var col2 = bmkKey ? semCol(bmkKey, bval) : null;
       var dotHtml = col2 ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(col2==='verde'?'#15803d':col2==='amarillo'?'#d97706':'#dc2626')+';margin-right:5px;"></span>' : '';
       var bm = bmkKey ? BM[bmkKey] : null;
-      var fuHtml = bm ? '<span style="font-size:10px;color:#9ca3af;">'+bm.fu+'</span>' : '<span style="color:#e5e7eb;">—</span>';
-      html += '<tr><td>'+dotHtml+v.name+'</td><td class="vv">'+(v.value!==null?fn(v.value):'—')+'</td>'+(hasPct?'<td class="vp">'+(v.pct!==null?fn(v.pct)+'%':'')+'</td>':'')+(hasMed?'<td class="r" style="color:#7b1010;font-weight:700;">'+(v.med!=null?fn(v.med):'')+'</td>':'')+'<td>'+fuHtml+'</td></tr>';
+      html += '<tr><td>'+dotHtml+v.name+'</td><td class="vv">'+(v.value!==null?fn(v.value):'—')+'</td>'+(hasPct?'<td class="vp">'+(v.pct!==null?fn(v.pct)+'%':'')+'</td>':'')+(hasMed?'<td class="r" style="color:#7b1010;font-weight:700;">'+(v.med!=null?fn(v.med):'')+'</td>':'')+'</tr>';
     });
     html += '</tbody></table>';
   }
