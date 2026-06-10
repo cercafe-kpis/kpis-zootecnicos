@@ -300,8 +300,6 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <button class="sf-btn on" onclick="filterSem('Todos')">Todos</button>
       <button class="sf-btn" onclick="filterSem('Reproductivo')">Reproductivo</button>
       <button class="sf-btn" onclick="filterSem('Maternidad')">Maternidad</button>
-      <button class="sf-btn" onclick="filterSem('Sitio 2')">Sitio 2</button>
-      <button class="sf-btn" onclick="filterSem('Sitio 3')">Sitio 3</button>
     </div>
   </div><div class="sem-grid" id="semGrid"><div class="empty"><div class="ei">📁</div><p>Selecciona una granja</p></div></div></div>
   <div class="card"><div class="card-hd"><h2>📈 Funnel de sobrevivencia</h2></div><div class="funnel-wrap" id="funnelWrap"><div class="empty"><div class="ei">📁</div><p>Selecciona una granja</p></div></div></div>
@@ -314,8 +312,6 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <button class="sf-btn on" onclick="filterKPI('Todos')">Todos</button>
       <button class="sf-btn" onclick="filterKPI('Reproductivo')">Reproductivo</button>
       <button class="sf-btn" onclick="filterKPI('Maternidad')">Maternidad</button>
-      <button class="sf-btn" onclick="filterKPI('Sitio 2')">Sitio 2</button>
-      <button class="sf-btn" onclick="filterKPI('Sitio 3')">Sitio 3</button>
       <button class="sf-btn" onclick="filterKPI('Global')">Global</button>
     </div>
     <button class="btn grn" style="margin-left:8px;" onclick="buildKPIs()">⚡ Generar</button>
@@ -328,8 +324,6 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <button class="sf-btn on" onclick="filterEst('Todos')">Todos</button>
       <button class="sf-btn" onclick="filterEst('Reproductivo')">Reproductivo</button>
       <button class="sf-btn" onclick="filterEst('Maternidad')">Maternidad</button>
-      <button class="sf-btn" onclick="filterEst('Sitio 2')">Sitio 2</button>
-      <button class="sf-btn" onclick="filterEst('Sitio 3')">Sitio 3</button>
     </div>
     <button class="btn" onclick="expPDF()" style="margin-left:8px;background:#b91c1c;">🖨 Exportar PDF</button>
   </div><div id="estWrap"><div class="empty"><div class="ei">📁</div><p>Selecciona una granja</p></div></div></div>
@@ -410,12 +404,6 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
         <option value="pesoD">Peso al destete (kg)</option>
         <option value="pesoDprom">Peso promedio al destete (kg)</option>
         <option value="kgdha">Kg / Destetados / Hembra / Año</option>
-        <option value="gpd2">GPD Sitio 2 (kg/día)</option>
-        <option value="ca2">C.A. Sitio 2</option>
-        <option value="mort2">Mortalidad Sitio 2 (%)</option>
-        <option value="gpd3">GPD Sitio 3 (kg/día)</option>
-        <option value="ca3">C.A. Sitio 3</option>
-        <option value="mort3">Mortalidad Sitio 3 (%)</option>
         </select>
       </div>
     </div>
@@ -497,8 +485,7 @@ var SCOL = {
   'Plantel reproductivo': '#1060a8',
   'Gestación': '#d97706',
   'Maternidad': '#7c3aed',
-  'Sitio 2': '#dc2626',
-  'Sitio 3': '#1a7a4a',
+
   'Índices generales': '#374151'
 };
 
@@ -535,21 +522,8 @@ var BM = {
   'mortmat': {opt:11,   al:14,   cr:17,   hi:false,
               fu:'TN70 Feed Manual §2.1: mortalidad predestete < 11%'},
   'pesoD':   {opt:6.5,  al:5.5,  cr:4.5,  hi:true,
-              fu:'TN70 Feed Manual §2.1: peso al destete > 6.5 kg a las 3 semanas de vida'},
-  'gpd2':    {opt:0.60, al:0.52, cr:0.44, hi:true,
-              fu:'TN70 Feed Manual: ganancia de peso en levante estimada > 600 g/dia'},
-  'ca2':     {opt:1.55, al:1.75, cr:1.95, hi:false,
-              fu:'TN70 Feed Manual: conversion alimenticia en levante < 1.55'},
-  'mort2':   {opt:2,    al:4,    cr:6,    hi:false,
-              fu:'TN70 Feed Manual: mortalidad en levante < 2%'},
-  'gpd3':    {opt:1.0,  al:0.88, cr:0.75, hi:true,
-              fu:'TN70 Feed Manual §2.1: ganancia diaria en ceba > 1.000 g/dia'},
-  'ca3':     {opt:2.5,  al:2.65, cr:2.80, hi:false,
-              fu:'TN70 Feed Manual §2.1: conversion alimenticia en ceba < 2.5'},
-  'mort3':   {opt:1.5,  al:2.5,  cr:3.5,  hi:false,
-              fu:'TN70 Feed Manual §2.1: mortalidad en ceba < 1.5%'},
-  'kgdha':   {opt:250,  al:210,  cr:170,  hi:true,
-              fu:'Kg destetados / hembra / año: celda B97 del S4 Agriness — productividad total en kg de lechón destetado por hembra'},
+              fu:'TN70 Feed Manual §2.1: peso al destete > 6.5 kg a las 3 semanas de vida'},  'kgdha':   {opt:250,  al:210,  cr:170,  hi:true,
+              fu:'Kg destetados / hembra / año — productividad total en kg de lechón destetado por hembra'},
   'pesoDprom':{opt:6.5, al:5.5,  cr:4.5,  hi:true,
               fu:'Peso promedio al destete (media Agriness col D): meta > 6.5 kg TN70 Feed Manual §2.1'}
 };
@@ -605,26 +579,7 @@ var MSG = {
                rojo:'CRITICO: Peso promedio al destete < 5.5 kg — alta mortalidad en Sitio 2.'},
   'pesoD':{verde:'Peso al destete >= 6.5 kg — meta exacta TN70 Feed Manual §2.1. Lechones robustos para levante.',
            amarillo:'Por debajo de meta TN70 Feed Manual §2.1 (> 6.5 kg). Maximizar ingesta de alimento de la cerda desde dia 8 de lactancia.',
-           rojo:'CRITICO: Lechones muy livianos al destete. Alta correlacion con mortalidad en levante.'},
-  'gpd2': {verde:'Buena ganancia de peso en levante segun referencia TN70 Feed Manual.',
-           amarillo:'GPD bajo en levante. Revisar dieta post-destete (energia y lisina) y peso de entrada.',
-           rojo:'CRITICO: GPD muy bajo en levante. Auditar dieta y estado sanitario del lote.'},
-  'ca2':  {verde:'Conversion alimenticia excelente en levante segun referencia TN70 Feed Manual.',
-           amarillo:'C.A. elevada en levante. Revisar desperdicio de alimento, formulacion y sanidad del lote.',
-           rojo:'CRITICO: Mala conversion en levante. Auditar urgente dieta y manejo de comederos.'},
-  'mort2':{verde:'Mortalidad en levante bajo control segun TN70 Feed Manual.',
-           amarillo:'Revisar vacunacion al destete, bioseguridad y ventilacion en Sitio 2.',
-           rojo:'CRITICO: Alta mortalidad en levante. Diagnostico laboratorial urgente.'},
-  'gpd3': {verde:'GPD ceba >= 1.000 g/dia — meta exacta TN70 Feed Manual §2.1. Excelente desempeño en finalizacion.',
-           amarillo:'GPD ceba por debajo de meta TN70 Feed Manual §2.1 (> 1.000 g/dia). Revisar dieta de finalizacion, temperatura y sanidad del lote.',
-           rojo:'CRITICO: GPD muy bajo en ceba. Evaluar sanidad, formulacion y manejo de lotes.'},
-  'ca3':  {verde:'C.A. ceba <= 2.5 — meta exacta TN70 Feed Manual §2.1. Eficiencia optima en finalizacion.',
-           amarillo:'C.A. ceba superando meta TN70 Feed Manual §2.1 (< 2.5). Revisar calidad de ingredientes, peso optimo de salida y frecuencia de alimentacion.',
-           rojo:'CRITICO: Mala conversion en ceba. Alto costo de produccion por kg de carne.'},
-  'mort3':{verde:'Mortalidad en ceba excelente segun TN70 Feed Manual §2.1 (< 1.5%).',
-           amarillo:'Revisar causas de muerte (trauma, respiratorio, digestivo) en Sitio 3.',
-           rojo:'CRITICO: Mortalidad alta en ceba. Investigar causa y tomar accion urgente.'}
-};
+           rojo:'CRITICO: Lechones muy livianos al destete. Alta correlacion con mortalidad en levante.'},};
 
 // KPI getter from a farm name
 function getVal(bmk, fname) {
@@ -656,14 +611,7 @@ function getVal(bmk, fname) {
     case 'mortmat': lDes=gv('Lechones a destetar'); muerL=gv('Muertes relac. dest.'); return(lDes&&muerL)?muerL/lDes*100:null;
     case 'pesoD':     return gm('Peso al destete (Kg)');
     case 'pesoDprom': return gm('Peso al destete (Kg)');
-    case 'kgdha':     return gv('Kg/Destetados/Hembra/Año');
-    case 'gpd2': return gs('G.P.D. medio','Sitio 2');
-    case 'ca2':  return gs('C.A.','Sitio 2');
-    case 'mort2':return gs('Mortalidad (%)','Sitio 2');
-    case 'gpd3': return gs('G.P.D. medio','Sitio 3');
-    case 'ca3':  return gs('C.A.','Sitio 3');
-    case 'mort3':return gs('Mortalidad (%)','Sitio 3');
-    default: return null;
+    case 'kgdha':     return gv('Kg/Destetados/Hembra/Año');    default: return null;
   }
 }
 
@@ -729,7 +677,7 @@ function parseWb(wb) {
   var mFin = a1.match(/Fecha final:\s*([\d\/]+)/i);
   if (mIni && mFin) periodoStr = mIni[1] + ' — ' + mFin[1];
 
-  var SEGS = ['Plantel reproductivo','Gestación','Maternidad','Sitio 2','Sitio 3','Índices generales'];
+  var SEGS = ['Plantel reproductivo','Gestación','Maternidad','Índices generales'];
   var SKIP = {'Reposición de hembras':1,'Mortalidad de hembras':1,'Índices complementarios':1,
     'Servicios':1,'Pérdidas reproductivas':1,'Intervalos':1,'Partos':1,'Nacimientos':1,
     'Destete':1,'Destetados':1,'Entradas':1,'Tipos de entrada':1,'Salidas':1,
@@ -1000,14 +948,7 @@ function varToBmk(name, seg) {
     'Repetición de celo':'rep','Vivos':'nv','Nacidos muertos':'nm',
     'Período de lactancia':'lac','Peso (Kg)':'pesoD'
   };
-  if (name === 'Muertes relac. dest.') return 'mortmat';
-  if (name === 'G.P.D. medio' && seg === 'Sitio 2') return 'gpd2';
-  if (name === 'C.A.' && seg === 'Sitio 2') return 'ca2';
-  if (name === 'Mortalidad (%)' && seg === 'Sitio 2') return 'mort2';
-  if (name === 'G.P.D. medio' && seg === 'Sitio 3') return 'gpd3';
-  if (name === 'C.A.' && seg === 'Sitio 3') return 'ca3';
-  if (name === 'Mortalidad (%)' && seg === 'Sitio 3') return 'mort3';
-  return map[name] || null;
+  if (name === 'Muertes relac. dest.') return 'mortmat';  return map[name] || null;
 }
 
 // ============================================================
@@ -1027,13 +968,7 @@ function calcCriticos() {
     {bmk:'nm',      lbl:'Nacidos muertos / parto',      seg:'Maternidad'},
     {bmk:'lac',     lbl:'Período de lactancia',         seg:'Maternidad'},
     {bmk:'mortmat', lbl:'Mortalidad en maternidad',     seg:'Maternidad'},
-    {bmk:'pesoD',   lbl:'Peso al destete',              seg:'Maternidad'},
-    {bmk:'gpd2',    lbl:'GPD Sitio 2',                  seg:'Sitio 2'},
-    {bmk:'ca2',     lbl:'C.A. Sitio 2',                 seg:'Sitio 2'},
-    {bmk:'mort2',   lbl:'Mortalidad Sitio 2',           seg:'Sitio 2'},
-    {bmk:'gpd3',    lbl:'GPD Sitio 3',                  seg:'Sitio 3'},
-    {bmk:'ca3',     lbl:'C.A. Sitio 3',                 seg:'Sitio 3'},
-    {bmk:'mort3',   lbl:'Mortalidad Sitio 3',           seg:'Sitio 3'}
+    {bmk:'pesoD',   lbl:'Peso al destete',              seg:'Maternidad'}
   ];
   checks.forEach(function(ch) {
     var val = getVal(ch.bmk, activeFarm || farmName);
@@ -1094,10 +1029,6 @@ function renderFunnel() {
   var lDes = g('Lechones a destetar') || nv;
   var muerL = g('Muertes relac. dest.') || 0;
   var dest = lDes - muerL;
-  var m2 = gs('Mortalidad (%)','Sitio 2') || 0;
-  var m3 = gs('Mortalidad (%)','Sitio 3') || 0;
-  var sal2 = Math.round(dest * (1 - m2/100));
-  var sal3 = Math.round(sal2 * (1 - m3/100));
   var max = Math.max(nv, 1);
   function bar(lbl, n, col, perd, plbl) {
     var w = Math.min(100, n/max*100).toFixed(1);
@@ -1110,18 +1041,6 @@ function renderFunnel() {
   html += bar('Nacidos vivos', nv, '#64748b', 0, '');
   html += bar('Llegan a destete', lDes, '#1060a8', nv-lDes, 'mort. maternidad');
   html += bar('Destetados', dest, '#7c3aed', muerL, 'mort. lactancia');
-  html += bar('Salen Sitio 2', sal2, '#d97706', dest-sal2, 'mort. levante');
-  html += bar('Vendidos (est.)', sal3, '#1a7a4a', sal2-sal3, 'mort. ceba');
-  if (nv > 0) {
-    var sob = (sal3/nv*100).toFixed(1);
-    var perd = nv - sal3;
-    var sobCol = parseFloat(sob)>=88?'#15803d':parseFloat(sob)>=80?'#d97706':'#dc2626';
-    html += '<div style="margin-top:14px;padding:12px 14px;background:#f8faff;border:1px solid #c7d9f5;border-left:4px solid '+sobCol+';border-radius:4px;font-size:13px;">' +
-      '<strong>Sobrevivencia global: <span style="color:'+sobCol+'">'+sob+'%</span></strong> — ' +
-      'De '+nv+' nacidos vivos, '+sal3+' estimados a venta. ' +
-      '<span style="color:#dc2626;font-weight:600;">Pérdida: '+perd+' animales ('+((perd/nv)*100).toFixed(1)+'%)</span>' +
-      '<br><span style="font-size:11px;color:#9ca3af;">Meta TN Colombia: >88% sobrevivencia | Porkcolombia: >85% | 333 Latam: >87%</span></div>';
-  }
   document.getElementById('funnelWrap').innerHTML = html;
 }
 
@@ -1135,24 +1054,8 @@ function renderPhase() {
   var lDes = g('Lechones a destetar'), muerL = g('Muertes relac. dest.');
   var mortMat = (lDes&&muerL) ? muerL/lDes*100 : null;
   var html = '<div class="phase-grid">';
-  html += '<div class="phase-box"><div class="phase-name" style="color:#7c3aed">⬤ Maternidad</div>' +
-    '<div class="pm"><span class="lbl">NV/camada</span>'+sv(g('Vivos'),'nv')+'</div>' +
-    '<div class="pm"><span class="lbl">Mort. maternidad</span>'+sv(mortMat,'mortmat')+'</div>' +
-    '<div class="pm"><span class="lbl">Peso destete</span>'+sv(g('Peso (Kg)'),'pesoD')+'</div>' +
-    '<div class="pm"><span class="lbl">Período lactancia</span>'+sv(g('Período de lactancia'),'lac')+'</div>' +
-    '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">Meta TN: NV>13.5 · Mort<6% · Peso>6.5kg</div></div>';
-  html += '<div class="phase-box"><div class="phase-name" style="color:#dc2626">⬤ Sitio 2 — Levante</div>' +
-    '<div class="pm"><span class="lbl">Mortalidad</span>'+sv(gs('Mortalidad (%)','Sitio 2'),'mort2')+'</div>' +
-    '<div class="pm"><span class="lbl">GPD</span>'+sv(gs('G.P.D. medio','Sitio 2'),'gpd2')+'</div>' +
-    '<div class="pm"><span class="lbl">C.A.</span>'+sv(gs('C.A.','Sitio 2'),'ca2')+'</div>' +
-    '<div class="pm"><span class="lbl">Días en fase</span><span>'+fn(gs('Días en la fase','Sitio 2'))+'</span></div>' +
-    '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">Meta TN: Mort<2% · GPD>0.60 · CA<1.55</div></div>';
-  html += '<div class="phase-box"><div class="phase-name" style="color:#1a7a4a">⬤ Sitio 3 — Ceba</div>' +
-    '<div class="pm"><span class="lbl">Mortalidad</span>'+sv(gs('Mortalidad (%)','Sitio 3'),'mort3')+'</div>' +
-    '<div class="pm"><span class="lbl">GPD</span>'+sv(gs('G.P.D. medio','Sitio 3'),'gpd3')+'</div>' +
-    '<div class="pm"><span class="lbl">C.A.</span>'+sv(gs('C.A.','Sitio 3'),'ca3')+'</div>' +
-    '<div class="pm"><span class="lbl">Días en fase</span><span>'+fn(gs('Días en la fase','Sitio 3'))+'</span></div>' +
-    '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">Meta TN: Mort<1% · GPD>0.90 · CA<2.30</div></div>';
+  html += '';
+  html += '';
   html += '</div>';
   document.getElementById('phaseWrap').innerHTML = html;
 }
@@ -1168,9 +1071,6 @@ function calcKPIs() {
   var nv=g('Vivos'), nm=g('Nacidos muertos'), momif=g('Momificados');
   var lDes=g('Lechones a destetar'), muerL=g('Muertes relac. dest.');
   var kgV=g('Kg/Vendidos/Hembra/Año'), ds=g('Destete - Servicio');
-  var ca2=gs('C.A.','Sitio 2'), gpd2=gs('G.P.D. medio','Sitio 2');
-  var ca3=gs('C.A.','Sitio 3'), gpd3=gs('G.P.D. medio','Sitio 3');
-  var m2=gs('Mortalidad (%)','Sitio 2'), m3=gs('Mortalidad (%)','Sitio 3');
 
   if(dnp&&ip&&dha) {
     var pl=(dnp/ip)*dha;
@@ -1220,31 +1120,9 @@ function calcKPIs() {
       fml:'Kg vendidos/Ha/Año ÷ Destetados/Ha/Año = '+fn(kgV)+' ÷ '+fn(dha),
       val:kpL.toFixed(1),unit:'kg carne/lechón destetado',bench:'> 90 kg TN Colombia | > 85 kg Porkcolombia',
       ctx:kpL>=90?'✓ Buena conversión de lechones a carne.':'⚠ Valor bajo indica mortalidad alta o bajo peso de salida en S2/S3.'});
-  }
-  if(ca2) {
-    var ef2=(1/ca2*100);
-    kpis.push({seg:'Sitio 2',icon:'🌿',title:'Retorno de Carne por Alimento — Sitio 2',
-      desc:'Por cada 100 kg de alimento en levante, ¿cuántos kg de carne produce?',
-      fml:'(1/C.A.)×100 = (1/'+fn(ca2)+')×100',
-      val:ef2.toFixed(1),unit:'kg carne/100 kg alimento S2',bench:'> 64 kg/100 kg (C.A.<1.55) — TN Colombia',
-      ctx:ca2<=1.55?'✓ Excelente conversión en levante.':'⚠ C.A. '+fn(ca2)+' en S2. Por encima de meta TN (<1.55).'});
-  }
-  if(ca3) {
-    var ef3=(1/ca3*100);
-    kpis.push({seg:'Sitio 3',icon:'🥩',title:'Retorno de Carne por Alimento — Sitio 3',
-      desc:'Por cada 100 kg de alimento en ceba, ¿cuántos kg de carne produce?',
-      fml:'(1/C.A.)×100 = (1/'+fn(ca3)+')×100',
-      val:ef3.toFixed(1),unit:'kg carne/100 kg alimento S3',bench:'> 43 kg/100 kg (C.A.<2.30) — TN Colombia',
-      ctx:ca3<=2.30?'✓ Excelente conversión en ceba.':'⚠ C.A. '+fn(ca3)+' en S3. Revisar dieta de acabado.'});
-  }
-  if(nv&&lDes&&m2!==null&&m3!==null) {
-    var d2=lDes-(muerL||0), s2out=Math.round(d2*(1-m2/100)), s3out=Math.round(s2out*(1-m3/100));
-    var perdSist=((nv-s3out)/nv*100);
-    kpis.push({seg:'Global',icon:'📊',title:'Pérdida Total de Animales en el Sistema (%)',
-      desc:'% de nacidos vivos que muere antes de llegar a venta — todas las fases.',
-      fml:'(NV - Vendidos)/NV×100 = ('+nv+' - '+s3out+')/'+nv+'×100',
-      val:perdSist.toFixed(1),unit:'% NV que no llegan a venta',bench:'< 12% TN Colombia | < 15% Porkcolombia | < 13% 333',
-      ctx:perdSist<=12?'✓ Pérdida sistémica dentro del rango TN Colombia.':'⚠ Se pierden '+(nv-s3out)+' animales ('+perdSist.toFixed(1)+'%). Meta TN: <12%.'});
+  });
+  });
+  });
   }
 }
 
@@ -1353,54 +1231,18 @@ var ACT = {
     'Registrar la causa de muerte de cada lechon: aplastamiento, hipotermia, inanicion o enfermedad — el registro permite identificar patrones y aplicar acciones especificas por causa'
   ],
   'Peso al destete': [
-    'La meta TN70 es mas de 6.5 kg al destete a las 3 semanas — lechones que llegan por debajo de 5 kg al levante tienen mayor riesgo de mortalidad en Sitio 2',
+    'La meta TN70 es mas de 6.5 kg al destete a las 3 semanas — lechones que llegan por debajo de 5 kg al levante tienen mayor riesgo de mortalidad en levante',
     'Controlar que la temperatura del area de descanso de los lechones sea la correcta: si tienen frio consumen mas energia para termorregulacion y crecen menos',
     'Verificar que no haya competencia entre lechones por la ubre — camadas uniformes con lechones del mismo tamano tienen mejor promedio de peso al destete; hacer adopciones por tamano',
     'Registrar el peso individual de lechones debiles al dia 3 de vida — los que pesan menos de 800g necesitan manejo especial (cerdas nodrizas o lactancia artificial) para llegar al destete',
     'Monitorear el peso de la camada completa cada semana durante la lactancia para detectar a tiempo si la produccion de leche de la cerda es insuficiente'
   ],
-  'GPD Sitio 2': [
-    'Registrar el peso de entrada y salida de cada lote en Sitio 2 para calcular la GPD real por lote y comparar entre periodos',
-    'Controlar la temperatura de llegada a Sitio 2 la primera semana: los lechones recien destetados necesitan alrededor de 28 C — revisar calefaccion, cortinas y microclima del corral de recepcion',
-    'Garantizar acceso al comedero para todos los animales desde el primer dia — la recomendacion es un espacio de comedero por cada 4 animales; revisar altura y regulacion del comedero segun el peso',
-    'Verificar el estado sanitario del lote antes de ingresar a Sitio 2: PCV2, Mycoplasma e Influenza porcina son las principales causas de reduccion de GPD en levante — revisar el programa de vacunacion',
-    'Separar inmediatamente los lechones debiles o rezagados al ingreso para evitar competencia y facilitar su recuperacion en corral de enfermeria'
-  ],
-  'C.A. Sitio 2': [
-    'Revisar el tipo de comedero y la regulacion del chorro de alimento para minimizar el desperdicio — el desperdicio puede representar el 5-10% del alimento entregado y no se contabiliza en la conversion',
-    'Verificar que el alimento este fresco y que no haya acumulacion de alimento rancio en los comederos — los animales rechazan el alimento con moho o rancio y esto distorsiona la C.A.',
-    'Controlar la densidad de animales por corral: el hacinamiento genera estres, reduce el consumo y empeora la conversion — verificar metros cuadrados por animal segun el peso',
-    'Revisar el estado sanitario del lote: animales con proceso inflamatorio o infeccion subaguda destinan energia a la respuesta inmune y no al crecimiento — identificar y tratar los focos de enfermedad',
-    'Registrar el consumo por lote y comparar entre lotes del mismo peso para identificar si el problema es de manejo, sanidad o infraestructura'
-  ],
-  'Mortalidad Sitio 2': [
-    'Revisar el protocolo de vacunacion al destete: PCV2, Mycoplasma y otros patologenos respiratorios son los principales causantes de mortalidad en levante — verificar esquema y laboratorio proveedor',
-    'Controlar la densidad de animales en los corrales: maximo 0.35 m2 por animal — el hacinamiento aumenta el estres, la agresividad y la diseminacion de enfermedades',
-    'Separar inmediatamente los animales enfermos o rezagados del grupo principal — un animal debil en el mismo corral es fuente de infeccion y no puede competir por el comedero',
-    'Verificar la ventilacion del galpón: la concentracion de amoniaco debe ser inferior a 20 ppm medida a nivel del animal — el amoniaco dania las vias respiratorias y facilita infecciones secundarias',
-    'Revisar la temperatura de llegada en la primera semana post-destete: el choque termico al entrar a Sitio 2 es una causa frecuente de mortalidad temprana'
-  ],
-  'GPD Sitio 3': [
-    'Registrar el peso de entrada y salida de cada lote en Sitio 3 para calcular la GPD real y comparar entre periodos y entre corrales del mismo galpon',
-    'Controlar la temperatura de la sala de ceba entre 16 y 22 C — por encima de 25 C el consumo baja significativamente y con el la ganancia de peso; revisar ventilacion, cortinas y orientacion del galpon',
-    'Garantizar acceso permanente a agua limpia y fresca — la restriccion de agua incluso por pocas horas reduce el consumo y la GPD; revisar bebederos, presion y flujo diariamente',
-    'Verificar sanidad del lote: PRRS, Mycoplasma y PCV2 en ceba son causas directas de reduccion de GPD — un animal en proceso inflamatorio no crece aunque coma bien',
-    'Monitorear el peso corporal del lote en puntos criticos (entrada, mitad y salida) para detectar a tiempo lotes con GPD bajo y tomar acciones antes del peso de venta'
-  ],
-  'C.A. Sitio 3': [
-    'Revisar el peso optimo de salida: despues de los 120 kg la conversion empeora progresivamente — cada dia que el animal pasa por encima del peso optimo tiene una C.A. mas alta y un costo mayor',
-    'Controlar el desperdicio de alimento en los comederos de ceba: ajustar la altura y la apertura del comedero segun el tamano actual de los animales en cada etapa',
-    'Verificar que los bebederos funcionen correctamente: animales que no toman suficiente agua reducen el consumo de alimento y empeoran la conversion',
-    'Revisar la densidad de animales en los corrales de ceba: a mayor peso el espacio requerido aumenta — el hacinamiento en lotes pesados genera competencia por el comedero y empeora la C.A.',
-    'Registrar el consumo por lote desde el ingreso hasta la venta para calcular la C.A. acumulada real y comparar con periodos anteriores'
-  ],
-  'Mortalidad Sitio 3': [
-    'Identificar la causa de cada muerte en ceba: traumatismos, problemas respiratorios o digestivos — cada causa tiene una accion diferente y el registro permite priorizar correctamente',
-    'Revisar la densidad de los corrales en ceba — a mayor peso de los animales el espacio minimo requerido aumenta; el hacinamiento en lotes pesados genera peleas y lesiones graves',
-    'Separar inmediatamente los animales con lesiones, cojeras o signos de enfermedad — un cerdo de 100 kg lesionado es dificil de manejar y puede contaminar o agredir al resto del grupo',
-    'Controlar el acceso al comedero y bebedero en corrales de animales pesados — la competencia por recursos es la principal causa de agresion y lesiones en la etapa de ceba',
-    'Revisar el manejo de los animales proximos a venta: los movimientos y mezclas en los ultimos dias antes del transporte generan estres y aumentan la mortalidad periventa'
-  ]
+  
+  
+  
+  
+  
+  
 };
 // KPI getter from a farm name
 function processFiles(files) {
@@ -1441,7 +1283,7 @@ function parseWb(wb) {
   var mFin = a1.match(/Fecha final:\s*([\d\/]+)/i);
   if (mIni && mFin) periodoStr = mIni[1] + ' — ' + mFin[1];
 
-  var SEGS = ['Plantel reproductivo','Gestación','Maternidad','Sitio 2','Sitio 3','Índices generales'];
+  var SEGS = ['Plantel reproductivo','Gestación','Maternidad','Índices generales'];
   var SKIP = {'Reposición de hembras':1,'Mortalidad de hembras':1,'Índices complementarios':1,
     'Servicios':1,'Pérdidas reproductivas':1,'Intervalos':1,'Partos':1,'Nacimientos':1,
     'Destete':1,'Destetados':1,'Entradas':1,'Tipos de entrada':1,'Salidas':1,
@@ -1712,14 +1554,7 @@ function varToBmk(name, seg) {
     'Repetición de celo':'rep','Vivos':'nv','Nacidos muertos':'nm',
     'Período de lactancia':'lac','Peso (Kg)':'pesoD'
   };
-  if (name === 'Muertes relac. dest.') return 'mortmat';
-  if (name === 'G.P.D. medio' && seg === 'Sitio 2') return 'gpd2';
-  if (name === 'C.A.' && seg === 'Sitio 2') return 'ca2';
-  if (name === 'Mortalidad (%)' && seg === 'Sitio 2') return 'mort2';
-  if (name === 'G.P.D. medio' && seg === 'Sitio 3') return 'gpd3';
-  if (name === 'C.A.' && seg === 'Sitio 3') return 'ca3';
-  if (name === 'Mortalidad (%)' && seg === 'Sitio 3') return 'mort3';
-  return map[name] || null;
+  if (name === 'Muertes relac. dest.') return 'mortmat';  return map[name] || null;
 }
 
 // ============================================================
@@ -1739,13 +1574,7 @@ function calcCriticos() {
     {bmk:'nm',      lbl:'Nacidos muertos / parto',      seg:'Maternidad'},
     {bmk:'lac',     lbl:'Período de lactancia',         seg:'Maternidad'},
     {bmk:'mortmat', lbl:'Mortalidad en maternidad',     seg:'Maternidad'},
-    {bmk:'pesoD',   lbl:'Peso al destete',              seg:'Maternidad'},
-    {bmk:'gpd2',    lbl:'GPD Sitio 2',                  seg:'Sitio 2'},
-    {bmk:'ca2',     lbl:'C.A. Sitio 2',                 seg:'Sitio 2'},
-    {bmk:'mort2',   lbl:'Mortalidad Sitio 2',           seg:'Sitio 2'},
-    {bmk:'gpd3',    lbl:'GPD Sitio 3',                  seg:'Sitio 3'},
-    {bmk:'ca3',     lbl:'C.A. Sitio 3',                 seg:'Sitio 3'},
-    {bmk:'mort3',   lbl:'Mortalidad Sitio 3',           seg:'Sitio 3'}
+    {bmk:'pesoD',   lbl:'Peso al destete',              seg:'Maternidad'}
   ];
   checks.forEach(function(ch) {
     var val = getVal(ch.bmk, activeFarm || farmName);
@@ -1806,10 +1635,6 @@ function renderFunnel() {
   var lDes = g('Lechones a destetar') || nv;
   var muerL = g('Muertes relac. dest.') || 0;
   var dest = lDes - muerL;
-  var m2 = gs('Mortalidad (%)','Sitio 2') || 0;
-  var m3 = gs('Mortalidad (%)','Sitio 3') || 0;
-  var sal2 = Math.round(dest * (1 - m2/100));
-  var sal3 = Math.round(sal2 * (1 - m3/100));
   var max = Math.max(nv, 1);
   function bar(lbl, n, col, perd, plbl) {
     var w = Math.min(100, n/max*100).toFixed(1);
@@ -1822,18 +1647,6 @@ function renderFunnel() {
   html += bar('Nacidos vivos', nv, '#64748b', 0, '');
   html += bar('Llegan a destete', lDes, '#1060a8', nv-lDes, 'mort. maternidad');
   html += bar('Destetados', dest, '#7c3aed', muerL, 'mort. lactancia');
-  html += bar('Salen Sitio 2', sal2, '#d97706', dest-sal2, 'mort. levante');
-  html += bar('Vendidos (est.)', sal3, '#1a7a4a', sal2-sal3, 'mort. ceba');
-  if (nv > 0) {
-    var sob = (sal3/nv*100).toFixed(1);
-    var perd = nv - sal3;
-    var sobCol = parseFloat(sob)>=88?'#15803d':parseFloat(sob)>=80?'#d97706':'#dc2626';
-    html += '<div style="margin-top:14px;padding:12px 14px;background:#f8faff;border:1px solid #c7d9f5;border-left:4px solid '+sobCol+';border-radius:4px;font-size:13px;">' +
-      '<strong>Sobrevivencia global: <span style="color:'+sobCol+'">'+sob+'%</span></strong> — ' +
-      'De '+nv+' nacidos vivos, '+sal3+' estimados a venta. ' +
-      '<span style="color:#dc2626;font-weight:600;">Pérdida: '+perd+' animales ('+((perd/nv)*100).toFixed(1)+'%)</span>' +
-      '<br><span style="font-size:11px;color:#9ca3af;">Meta TN Colombia: >88% sobrevivencia | Porkcolombia: >85% | 333 Latam: >87%</span></div>';
-  }
   document.getElementById('funnelWrap').innerHTML = html;
 }
 
@@ -1847,24 +1660,8 @@ function renderPhase() {
   var lDes = g('Lechones a destetar'), muerL = g('Muertes relac. dest.');
   var mortMat = (lDes&&muerL) ? muerL/lDes*100 : null;
   var html = '<div class="phase-grid">';
-  html += '<div class="phase-box"><div class="phase-name" style="color:#7c3aed">⬤ Maternidad</div>' +
-    '<div class="pm"><span class="lbl">NV/camada</span>'+sv(g('Vivos'),'nv')+'</div>' +
-    '<div class="pm"><span class="lbl">Mort. maternidad</span>'+sv(mortMat,'mortmat')+'</div>' +
-    '<div class="pm"><span class="lbl">Peso destete</span>'+sv(g('Peso (Kg)'),'pesoD')+'</div>' +
-    '<div class="pm"><span class="lbl">Período lactancia</span>'+sv(g('Período de lactancia'),'lac')+'</div>' +
-    '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">Meta TN: NV>13.5 · Mort<6% · Peso>6.5kg</div></div>';
-  html += '<div class="phase-box"><div class="phase-name" style="color:#dc2626">⬤ Sitio 2 — Levante</div>' +
-    '<div class="pm"><span class="lbl">Mortalidad</span>'+sv(gs('Mortalidad (%)','Sitio 2'),'mort2')+'</div>' +
-    '<div class="pm"><span class="lbl">GPD</span>'+sv(gs('G.P.D. medio','Sitio 2'),'gpd2')+'</div>' +
-    '<div class="pm"><span class="lbl">C.A.</span>'+sv(gs('C.A.','Sitio 2'),'ca2')+'</div>' +
-    '<div class="pm"><span class="lbl">Días en fase</span><span>'+fn(gs('Días en la fase','Sitio 2'))+'</span></div>' +
-    '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">Meta TN: Mort<2% · GPD>0.60 · CA<1.55</div></div>';
-  html += '<div class="phase-box"><div class="phase-name" style="color:#1a7a4a">⬤ Sitio 3 — Ceba</div>' +
-    '<div class="pm"><span class="lbl">Mortalidad</span>'+sv(gs('Mortalidad (%)','Sitio 3'),'mort3')+'</div>' +
-    '<div class="pm"><span class="lbl">GPD</span>'+sv(gs('G.P.D. medio','Sitio 3'),'gpd3')+'</div>' +
-    '<div class="pm"><span class="lbl">C.A.</span>'+sv(gs('C.A.','Sitio 3'),'ca3')+'</div>' +
-    '<div class="pm"><span class="lbl">Días en fase</span><span>'+fn(gs('Días en la fase','Sitio 3'))+'</span></div>' +
-    '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">Meta TN: Mort<1% · GPD>0.90 · CA<2.30</div></div>';
+  html += '';
+  html += '';
   html += '</div>';
   document.getElementById('phaseWrap').innerHTML = html;
 }
@@ -1880,9 +1677,6 @@ function calcKPIs() {
   var nv=g('Vivos'), nm=g('Nacidos muertos'), momif=g('Momificados');
   var lDes=g('Lechones a destetar'), muerL=g('Muertes relac. dest.');
   var kgV=g('Kg/Vendidos/Hembra/Año'), ds=g('Destete - Servicio');
-  var ca2=gs('C.A.','Sitio 2'), gpd2=gs('G.P.D. medio','Sitio 2');
-  var ca3=gs('C.A.','Sitio 3'), gpd3=gs('G.P.D. medio','Sitio 3');
-  var m2=gs('Mortalidad (%)','Sitio 2'), m3=gs('Mortalidad (%)','Sitio 3');
 
   if(dnp&&ip&&dha) {
     var pl=(dnp/ip)*dha;
@@ -1932,31 +1726,9 @@ function calcKPIs() {
       fml:'Kg vendidos/Ha/Año ÷ Destetados/Ha/Año = '+fn(kgV)+' ÷ '+fn(dha),
       val:kpL.toFixed(1),unit:'kg carne/lechón destetado',bench:'> 90 kg TN Colombia | > 85 kg Porkcolombia',
       ctx:kpL>=90?'✓ Buena conversión de lechones a carne.':'⚠ Valor bajo indica mortalidad alta o bajo peso de salida en S2/S3.'});
-  }
-  if(ca2) {
-    var ef2=(1/ca2*100);
-    kpis.push({seg:'Sitio 2',icon:'🌿',title:'Retorno de Carne por Alimento — Sitio 2',
-      desc:'Por cada 100 kg de alimento en levante, ¿cuántos kg de carne produce?',
-      fml:'(1/C.A.)×100 = (1/'+fn(ca2)+')×100',
-      val:ef2.toFixed(1),unit:'kg carne/100 kg alimento S2',bench:'> 64 kg/100 kg (C.A.<1.55) — TN Colombia',
-      ctx:ca2<=1.55?'✓ Excelente conversión en levante.':'⚠ C.A. '+fn(ca2)+' en S2. Por encima de meta TN (<1.55).'});
-  }
-  if(ca3) {
-    var ef3=(1/ca3*100);
-    kpis.push({seg:'Sitio 3',icon:'🥩',title:'Retorno de Carne por Alimento — Sitio 3',
-      desc:'Por cada 100 kg de alimento en ceba, ¿cuántos kg de carne produce?',
-      fml:'(1/C.A.)×100 = (1/'+fn(ca3)+')×100',
-      val:ef3.toFixed(1),unit:'kg carne/100 kg alimento S3',bench:'> 43 kg/100 kg (C.A.<2.30) — TN Colombia',
-      ctx:ca3<=2.30?'✓ Excelente conversión en ceba.':'⚠ C.A. '+fn(ca3)+' en S3. Revisar dieta de acabado.'});
-  }
-  if(nv&&lDes&&m2!==null&&m3!==null) {
-    var d2=lDes-(muerL||0), s2out=Math.round(d2*(1-m2/100)), s3out=Math.round(s2out*(1-m3/100));
-    var perdSist=((nv-s3out)/nv*100);
-    kpis.push({seg:'Global',icon:'📊',title:'Pérdida Total de Animales en el Sistema (%)',
-      desc:'% de nacidos vivos que muere antes de llegar a venta — todas las fases.',
-      fml:'(NV - Vendidos)/NV×100 = ('+nv+' - '+s3out+')/'+nv+'×100',
-      val:perdSist.toFixed(1),unit:'% NV que no llegan a venta',bench:'< 12% TN Colombia | < 15% Porkcolombia | < 13% 333',
-      ctx:perdSist<=12?'✓ Pérdida sistémica dentro del rango TN Colombia.':'⚠ Se pierden '+(nv-s3out)+' animales ('+perdSist.toFixed(1)+'%). Meta TN: <12%.'});
+  });
+  });
+  });
   }
 }
 
@@ -2032,7 +1804,7 @@ function renderEstrategia() {
 // ============================================================
 var BM_FMTS = {
   pha:2, dha:1, tpar:1, ip:0, dnp:1, ds:1, rep:1, nv:2, nacTot:2, destCam:2, nm:2, lac:1,
-  mortmat:1, pesoD:2, gpd2:3, ca2:2, mort2:2, gpd3:3, ca3:2, mort3:2
+  mortmat:1, pesoD:2, pesoDprom:2, kgdha:0
 };
 
 var _filtDestete = 'todos'; // 'todos', 21, 28
@@ -2250,9 +2022,7 @@ var HM_KPIS = [
   {k:'pha',lbl:'Partos/H/A'},{k:'dha',lbl:'Dest/H/A'},{k:'tpar',lbl:'Tasa par.'},
   {k:'ip',lbl:'IEP'},{k:'dnp',lbl:'DNP'},{k:'ds',lbl:'D-S'},
   {k:'nv',lbl:'NV/cam.'},{k:'nacTot',lbl:'Nac.Tot/cam.'},{k:'destCam',lbl:'Dest/cam.'},
-  {k:'mortmat',lbl:'Mort.mat.'},{k:'pesoD',lbl:'PesoD'},{k:'pesoDprom',lbl:'Prom.Dest'},{k:'kgdha',lbl:'Kg/D/H/A'},
-  {k:'gpd2',lbl:'GPD S2'},{k:'ca2',lbl:'CA S2'},{k:'mort2',lbl:'Mort.S2'},
-  {k:'gpd3',lbl:'GPD S3'},{k:'ca3',lbl:'CA S3'},{k:'mort3',lbl:'Mort.S3'}
+  {k:'mortmat',lbl:'Mort.mat.'},{k:'pesoD',lbl:'PesoD'},{k:'pesoDprom',lbl:'Prom.Dest'},{k:'kgdha',lbl:'Kg/D/H/A'}
 ];
 
 function renderHeatmap(farms, ownFarms) {
