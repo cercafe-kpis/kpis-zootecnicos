@@ -408,6 +408,8 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
         <option value="lac">Período lactancia (días)</option>
         <option value="mortmat">Mortalidad maternidad (%)</option>
         <option value="pesoD">Peso al destete (kg)</option>
+        <option value="pesoDprom">Peso promedio al destete (kg)</option>
+        <option value="kgdha">Kg / Destetados / Hembra / Año</option>
         <option value="gpd2">GPD Sitio 2 (kg/día)</option>
         <option value="ca2">C.A. Sitio 2</option>
         <option value="mort2">Mortalidad Sitio 2 (%)</option>
@@ -545,7 +547,11 @@ var BM = {
   'ca3':     {opt:2.5,  al:2.65, cr:2.80, hi:false,
               fu:'TN70 Feed Manual §2.1: conversion alimenticia en ceba < 2.5'},
   'mort3':   {opt:1.5,  al:2.5,  cr:3.5,  hi:false,
-              fu:'TN70 Feed Manual §2.1: mortalidad en ceba < 1.5%'}
+              fu:'TN70 Feed Manual §2.1: mortalidad en ceba < 1.5%'},
+  'kgdha':   {opt:250,  al:210,  cr:170,  hi:true,
+              fu:'Kg destetados / hembra / año: celda B97 del S4 Agriness — productividad total en kg de lechón destetado por hembra'},
+  'pesoDprom':{opt:6.5, al:5.5,  cr:4.5,  hi:true,
+              fu:'Peso promedio al destete (media Agriness col D): meta > 6.5 kg TN70 Feed Manual §2.1'}
 };
 
 function semCol(bmk, val) {
@@ -591,6 +597,12 @@ var MSG = {
   'mortmat':{verde:'Mortalidad predestete dentro de meta TN70 Feed Manual §2.1 (< 11%). Buen manejo de lactancia.',
              amarillo:'Mortalidad predestete acercandose al limite TN70 Feed Manual §2.1 (11%). Revisar microclima de lechones (33-35°C semana 1), calostro (minimo 250 g/lechon) y densidad de camada.',
              rojo:'CRITICO: Alta mortalidad en lactancia. Protocolo de adopcion y cuidado intensivo urgente.'},
+  'kgdha':{verde:'Kg destetados/hembra/año por encima de la meta — excelente productividad total.',
+           amarillo:'Kg destetados/hembra/año en alerta — revisar prolificidad, mortalidad y peso al destete.',
+           rojo:'CRITICO: Kg destetados/hembra/año muy bajo — impacto directo en rentabilidad.'},
+  'pesoDprom':{verde:'Peso promedio al destete >= 6.5 kg — lechones robustos para levante.',
+               amarillo:'Peso promedio al destete entre 5.5 y 6.5 kg — riesgo moderado en levante.',
+               rojo:'CRITICO: Peso promedio al destete < 5.5 kg — alta mortalidad en Sitio 2.'},
   'pesoD':{verde:'Peso al destete >= 6.5 kg — meta exacta TN70 Feed Manual §2.1. Lechones robustos para levante.',
            amarillo:'Por debajo de meta TN70 Feed Manual §2.1 (> 6.5 kg). Maximizar ingesta de alimento de la cerda desde dia 8 de lactancia.',
            rojo:'CRITICO: Lechones muy livianos al destete. Alta correlacion con mortalidad en levante.'},
@@ -642,7 +654,9 @@ function getVal(bmk, fname) {
     case 'nm':   return gm('Nacidos muertos') || (function(){var p=gv('Partos del período'),nm=gv('Nacidos muertos');return(p&&nm)?nm/p:null;})();
     case 'lac':  return gm('Media de edad') || gv('Período de lactancia');
     case 'mortmat': lDes=gv('Lechones a destetar'); muerL=gv('Muertes relac. dest.'); return(lDes&&muerL)?muerL/lDes*100:null;
-    case 'pesoD': return gm('Peso al destete (Kg)');
+    case 'pesoD':     return gm('Peso al destete (Kg)');
+    case 'pesoDprom': return gm('Peso al destete (Kg)');
+    case 'kgdha':     return gv('Kg/Destetados/Hembra/Año');
     case 'gpd2': return gs('G.P.D. medio','Sitio 2');
     case 'ca2':  return gs('C.A.','Sitio 2');
     case 'mort2':return gs('Mortalidad (%)','Sitio 2');
@@ -2236,7 +2250,7 @@ var HM_KPIS = [
   {k:'pha',lbl:'Partos/H/A'},{k:'dha',lbl:'Dest/H/A'},{k:'tpar',lbl:'Tasa par.'},
   {k:'ip',lbl:'IEP'},{k:'dnp',lbl:'DNP'},{k:'ds',lbl:'D-S'},
   {k:'nv',lbl:'NV/cam.'},{k:'nacTot',lbl:'Nac.Tot/cam.'},{k:'destCam',lbl:'Dest/cam.'},
-  {k:'mortmat',lbl:'Mort.mat.'},{k:'pesoD',lbl:'PesoD'},
+  {k:'mortmat',lbl:'Mort.mat.'},{k:'pesoD',lbl:'PesoD'},{k:'pesoDprom',lbl:'Prom.Dest'},{k:'kgdha',lbl:'Kg/D/H/A'},
   {k:'gpd2',lbl:'GPD S2'},{k:'ca2',lbl:'CA S2'},{k:'mort2',lbl:'Mort.S2'},
   {k:'gpd3',lbl:'GPD S3'},{k:'ca3',lbl:'CA S3'},{k:'mort3',lbl:'Mort.S3'}
 ];
