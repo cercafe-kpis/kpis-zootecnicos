@@ -398,7 +398,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
         <option value="nv">Nacidos vivos / camada</option>
         <option value="nacTot">Nacidos totales / camada</option>
         <option value="destCam">Destetados / camada destetada</option>
-        <option value="nm">Nacidos muertos / parto</option>
+        <option value="nm">Nacidos muertos (%)</option>
         <option value="momif">Momificados (%)</option>
         <option value="lac">Período lactancia (días)</option>
         <option value="mortmat">Mortalidad maternidad (%)</option>
@@ -521,10 +521,10 @@ var BM = {
               fu:'TN70 Feed Manual §2.1: nacidos totales > 17 lechones/camada'},
   'destCam': {opt:14,   al:12,   cr:10,   hi:true,
               fu:'TN70 Feed Manual §2.1: destetados/camada > 14 lechones'},
-  'nm':      {opt:0.64, al:0.96, cr:1.28, hi:false,
-              fu:'TN70 Feed Manual §2.1: nacidos muertos < 8% del total de nacidos (< 0.64/parto sobre camadas de 17)'},
-  'momif':   {opt:0.5,  al:1.0,  cr:1.5,  hi:false,
-              fu:'Momificados % — por encima de 1.5% indica problemas de circo, PRRS o manejo reproductivo'},
+  'nm':      {opt:8,    al:10,   cr:12,   hi:false,
+              fu:'TN70 Feed Manual §2.1: nacidos muertos < 8% del total de nacidos'},
+  'momif':   {opt:2.0,  al:3.0,  cr:4.0,  hi:false,
+              fu:'Momificados < 2% del total de nacidos'},
   'lac':     {opt:21,   al:18,   cr:16,   hi:true,
               fu:'TN70 Feed Manual §12.3: lactancia estandar de 21 dias (tambien 28 y 35 dias segun objetivo)'},
   'mortmat': {opt:11,   al:14,   cr:17,   hi:false,
@@ -570,10 +570,10 @@ var MSG = {
   'nv':   {verde:'Nacidos vivos/camada >= 16. Potencial genetico TN70 Feed Manual §2.1 siendo aprovechado.',
            amarillo:'Por debajo de meta TN70 Feed Manual (> 16 NV/camada). Revisar nutricion en gestacion tardia (dias 85-110) y condicion corporal al parto.',
            rojo:'CRITICO: Camada muy pequeña. Evaluar problemas geneticos, reproductivos o nutricionales.'},
-  'momif':{verde:'Momificados dentro del límite normal (< 0.5%). Sin señales de problemas reproductivos sistémicos.',
-           amarillo:'Momificados entre 0.5% y 1.0% — revisar presencia de circo o PRRS en la piara.',
-           rojo:'CRITICO: Momificados > 1.5% — posible circulovirus, PRRS o manejo reproductivo deficiente.'},
-  'nm':   {verde:'Nacidos muertos dentro del limite TN70 Feed Manual §2.1 (< 8% del total). Buen manejo de partos.',
+  'momif':{verde:'Momificados < 2% del total de nacidos.',
+           amarillo:'Momificados entre 2% y 3% del total de nacidos.',
+           rojo:'Momificados > 4% del total de nacidos.'},
+  'nm':   {verde:'Nacidos muertos (%) dentro del límite TN70 (< 8%). Buen manejo de partos.',
            amarillo:'Nacidos muertos acercandose al limite del 8% establecido en TN70 Feed Manual §2.1. Revisar guardia de partos, material de nidificacion y duracion del parto.',
            rojo:'CRITICO: Muchos nacidos muertos. Establecer guardia permanente de partos urgente.'},
   'lac':  {verde:'Periodo de lactancia adecuado segun TN70 Feed Manual §12.3 (>= 21 dias).',
@@ -1809,7 +1809,7 @@ function renderEstrategia() {
 // ============================================================
 var BM_FMTS = {
   pha:2, dha:1, tpar:1, ip:0, dnp:1, ds:1, rep:1, nv:2, nacTot:2, destCam:2, nm:2, lac:1,
-  mortmat:1, pesoD:2, pesoDprom:2, kgdha:0, momif:2
+  mortmat:1, nm:1, pesoD:2, pesoDprom:2, kgdha:0, momif:2
 };
 
 var _filtDestete = 'todos'; // 'todos', 21, 28
