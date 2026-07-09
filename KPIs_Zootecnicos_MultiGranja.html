@@ -413,7 +413,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
   <div id="bmContent" style="display:none;">
     <div class="bm-sum" id="bmSum"></div>
     <div class="card"><div class="card-hd"><h2 id="bmChartTitle">Ranking</h2></div><div style="padding:16px;"><div class="chart-wrap"><canvas id="bmChart"></canvas></div></div></div>
-    <div class="card" style="margin-top:16px;"><div class="card-hd"><h2>📋 Tabla ranking</h2><button class="btn sec" style="margin-left:auto;" onclick="expBM()">↓ Exportar benchmarking</button></div><div style="overflow-x:auto;"><table class="rank-tbl" id="bmTable"></table></div></div>
+
     <div class="card" style="margin-top:16px;"><div class="card-hd"><h2>🗺 Mapa de calor — todos los KPIs</h2></div><div class="hm-wrap" id="bmHM"></div></div>
   </div>
 </div>
@@ -1994,21 +1994,7 @@ function renderBM() {
   });
   document.getElementById('bmChartTitle').textContent = 'Ranking: ' + kpiLabel;
 
-  // Ranking table
-  var thtml = '<thead><tr><th>#</th><th>Granja</th>' + (isAsocMode ? '<th>Asociado</th>' : '') + '<th>Valor</th><th>Estado vs TN</th></tr></thead><tbody>';
-  thtml += rows.map(function(r,i) {
-    var dc = r.col==='verde'?'#15803d':r.col==='amarillo'?'#d97706':'#dc2626';
-    var cls = r.col==='verde'?'rv-ok':r.col==='amarillo'?'rv-warn':'rv-bad';
-    var tag = r.col==='verde'?'OK':r.col==='amarillo'?'Alerta':'Crítico';
-    var rowStyle = r.isMine ? ' style="background:#fff8f0;font-weight:700;"' : '';
-    var farmLabel = (r.nombre || r.farm) + (r.isMine ? ' ★' : '');
-    var asocCol = isAsocMode ? '<td style="font-size:11px;color:#6b7280;">'+r.asociado+'</td>' : '';
-    return '<tr'+rowStyle+'><td class="rn">'+(i+1)+'</td><td class="rfn">'+farmLabel+'</td>' +
-      asocCol +
-      '<td class="'+cls+'">'+r.val.toFixed(fmt)+'</td>' +
-      '<td><span class="sdot" style="background:'+dc+'"></span>'+tag+'</td></tr>';
-  }).join('');
-  document.getElementById('bmTable').innerHTML = thtml + '</tbody>';
+  // Ranking table removed
 
   // Heatmap — en modo asociado mostrar todas las granjas de la red
   if (isAsocMode && globalData['pha']) {
@@ -2026,18 +2012,46 @@ function renderBM() {
   }
 }
 
-var HM_KPIS = [
-  {k:'pha',lbl:'Partos/H/A'},{k:'dha',lbl:'Dest/H/A'},{k:'tpar',lbl:'Tasa par.'},
-  {k:'ip',lbl:'IEP'},{k:'dnp',lbl:'DNP'},{k:'ds',lbl:'D-S'},
-  {k:'nv',lbl:'NV/cam.'},{k:'nacTot',lbl:'Nac.Tot/cam.'},{k:'destCam',lbl:'Dest/cam.'},
-  {k:'mortmat',lbl:'Mort.mat.'},{k:'nm',lbl:'NM%'},{k:'momif',lbl:'Momif%'},{k:'pesoD',lbl:'PesoD'},{k:'pesoDprom',lbl:'Prom.Dest'},{k:'kgdha',lbl:'Kg/D/H/A'}
+// Heatmap groups
+var HM_GROUPS = [
+  {label:'Cría',      kpis:[
+    {k:'tpar',   lbl:'Tasa par.'},
+    {k:'pha',    lbl:'Partos/H/A'},
+    {k:'ip',     lbl:'IEP'},
+    {k:'dnp',    lbl:'DNP'},
+    {k:'ds',     lbl:'D-S'}
+  ]},
+  {label:'Lactancia', kpis:[
+    {k:'nacTot', lbl:'Nac.Tot/cam'},
+    {k:'nm',     lbl:'NM%'},
+    {k:'momif',  lbl:'Momif%'},
+    {k:'nv',     lbl:'NV/cam'},
+    {k:'mortmat',lbl:'Mort.mat'},
+    {k:'destCam',lbl:'Dest/cam'},
+    {k:'pesoDprom',lbl:'Prom.Dest'},
+    {k:'kgdha',  lbl:'Kg/D/H/A'}
+  ]}
 ];
+// Flat list for backward compat
+var HM_KPIS = HM_GROUPS.reduce(function(a,g){return a.concat(g.kpis);}, []);
 
 function renderHeatmap(farms, ownFarms) {
   ownFarms = ownFarms || farms;
-  var html = '<table class="hm-tbl"><thead><tr><th class="hm-farm">Granja</th>';
+  var html = '<table class="hm-tbl"><thead>';
+
+  // Group header row
+  html += '<tr><th class="hm-farm" rowspan="2">Granja</th>';
+  HM_GROUPS.forEach(function(g) {
+    html += '<th colspan="'+g.kpis.length+'" style="text-align:center;background:#f0f4ff;border-bottom:2px solid #7b1010;font-size:11px;color:#7b1010;font-weight:700;letter-spacing:0.5px;">'+g.label.toUpperCase()+'</th>';
+  });
+  html += '</tr>';
+
+  // KPI label row
+  html += '<tr>';
   HM_KPIS.forEach(function(h){html += '<th title="'+h.k+'">'+h.lbl+'</th>';});
-  html += '</tr></thead><tbody>';
+  html += '</tr>';
+
+  html += '</thead><tbody>';
   farms.forEach(function(f) {
     var isMine = ownFarms.indexOf(f) >= 0;
     var rowStyle = isMine ? ' style="background:#fff8f0;"' : '';
