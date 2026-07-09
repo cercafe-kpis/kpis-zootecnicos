@@ -1929,7 +1929,7 @@ function renderBM() {
   document.getElementById('bmSum').innerHTML =
     '<div class="bm-sc"><div class="bm-sk">🏆 Mejor granja</div><div class="bm-sv" style="color:#15803d">'+(best?(best.nombre||best.farm):'—')+'</div><div class="bm-ss">'+(best?best.val.toFixed(fmt):'')+'</div></div>' +
     '<div class="bm-sc"><div class="bm-sk">📊 Promedio red</div><div class="bm-sv" style="color:#1060a8">'+avg.toFixed(fmt)+'</div><div class="bm-ss">'+rows.length+' granjas · ponderado por madres</div></div>' +
-    '<div class="bm-sc"><div class="bm-sk">⚠ Más rezagada</div><div class="bm-sv" style="color:#dc2626">'+(worst?(worst.nombre||worst.farm):'—')+'</div><div class="bm-ss">'+(worst?worst.val.toFixed(fmt):'')+'</div></div>' +
+    '<div class="bm-sc"><div class="bm-sk">💪 Más retada</div><div class="bm-sv" style="color:#dc2626">'+(worst?(worst.nombre||worst.farm):'—')+'</div><div class="bm-ss">'+(worst?worst.val.toFixed(fmt):'')+'</div></div>' +
     '<div class="bm-sc"><div class="bm-sk">🎯 Meta TN Colombia</div><div class="bm-sv" style="color:#7b1010">'+(bm?(bm.hi?'>':'<')+bm.opt:'—')+'</div><div class="bm-ss">'+(bm?bm.fu:'')+'</div></div>';
 
   // Chart
@@ -2074,6 +2074,28 @@ function renderHeatmap(farms, ownFarms) {
     html += '</tr>';
   });
   html += '</tbody></table>';
+
+  // Leyenda de colores
+  html += '<div style="display:flex;align-items:center;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:11px;color:#374151;">' +
+    '<span style="font-weight:600;color:#6b7280;">Semáforo vs meta TN Colombia:</span>' +
+    '<span style="display:flex;align-items:center;gap:5px;">' +
+      '<span style="width:14px;height:14px;border-radius:3px;background:rgba(21,128,61,.15);border:1px solid #15803d;display:inline-block;"></span>' +
+      '<span style="color:#15803d;font-weight:600;">Verde</span> — Cumple la meta' +
+    '</span>' +
+    '<span style="display:flex;align-items:center;gap:5px;">' +
+      '<span style="width:14px;height:14px;border-radius:3px;background:rgba(217,119,6,.18);border:1px solid #d97706;display:inline-block;"></span>' +
+      '<span style="color:#92400e;font-weight:600;">Amarillo</span> — En alerta' +
+    '</span>' +
+    '<span style="display:flex;align-items:center;gap:5px;">' +
+      '<span style="width:14px;height:14px;border-radius:3px;background:rgba(220,38,38,.18);border:1px solid #dc2626;display:inline-block;"></span>' +
+      '<span style="color:#991b1b;font-weight:600;">Rojo</span> — Crítico, por fuera de meta' +
+    '</span>' +
+    '<span style="display:flex;align-items:center;gap:5px;">' +
+      '<span style="width:14px;height:14px;border-radius:3px;background:#f8f9fa;border:1px solid #e5e7eb;display:inline-block;"></span>' +
+      '<span style="color:#9ca3af;">Sin dato</span>' +
+    '</span>' +
+  '</div>';
+
   document.getElementById('bmHM').innerHTML = html;
 }
 
