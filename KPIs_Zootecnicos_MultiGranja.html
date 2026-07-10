@@ -1994,7 +1994,7 @@ function renderBM() {
   if (bmChart) { bmChart.destroy(); bmChart = null; }
   // Adjust canvas height based on number of farms (38px per bar, min 300)
   var chartWrap = document.getElementById('bmChart').parentElement;
-  chartWrap.style.height = Math.max(300, rows.length * 38) + 'px';
+  chartWrap.style.height = '420px';
   var labels = rows.map(function(r){return r.nombre || r.farm;});
   var data = rows.map(function(r){return r.val;});
   var colors = rows.map(function(r){
@@ -2009,22 +2009,22 @@ function renderBM() {
     type:'bar',
     data:{labels:labels, datasets:datasets},
     options:{
-      responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      layout:{padding:{right:60}},
+      responsive:true, maintainAspectRatio:false, indexAxis:'x',
+      layout:{padding:{top:25}},
       plugins:{
         legend:{labels:{font:{size:12}}},
         tooltip:{
           callbacks:{
             label:function(ctx){
-              if(ctx.datasetIndex===0) return ' '+ctx.parsed.x.toFixed(fmt)+' — '+labels[ctx.dataIndex];
-              return ' Meta TN: '+ctx.parsed.x.toFixed(fmt);
+              if(ctx.datasetIndex===0) return ' '+ctx.parsed.y.toFixed(fmt);
+              return ' Meta TN: '+ctx.parsed.y.toFixed(fmt);
             }
           }
         }
       },
       scales:{
-        x:{ticks:{font:{size:11}}, grid:{color:'#f3f4f6'}},
-        y:{ticks:{font:{size:12}}, grid:{color:'#f3f4f6'}}
+        x:{ticks:{font:{size:10}, maxRotation:45, minRotation:30}, grid:{display:false}},
+        y:{ticks:{font:{size:11}}, grid:{color:'#f3f4f6'}, beginAtZero:false}
       },
       animation:{
         onComplete: function(){
@@ -2032,15 +2032,16 @@ function renderBM() {
           var ctx2 = chart.ctx;
           ctx2.save();
           ctx2.font = 'bold 11px Segoe UI';
-          ctx2.textBaseline = 'middle';
+          ctx2.textBaseline = 'bottom';
+          ctx2.textAlign = 'center';
           var ds = chart.data.datasets[0];
           if(!ds) return;
           var meta = chart.getDatasetMeta(0);
           meta.data.forEach(function(bar, i){
             var val = ds.data[i];
             if(val===null||val===undefined) return;
-            var x = bar.x + 6;
-            var y = bar.y;
+            var x = bar.x;
+            var y = bar.y - 3;
             var col = rows[i] ? (rows[i].col==='verde'?'#15803d':rows[i].col==='amarillo'?'#d97706':'#dc2626') : '#374151';
             ctx2.fillStyle = col;
             ctx2.fillText(val.toFixed(fmt), x, y);
