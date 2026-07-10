@@ -724,6 +724,35 @@ function parseWb(wb) {
     }
   }
 
+  // Pre-capture variables that appear BEFORE any segment header (rows ~28-60)
+  // These include: Stock medio, DNP, Repeticion de celo, Destete-Servicio
+  var PRE_VARS = [
+    'Stock medio de madres activas',
+    'Media de días no productivos',
+    'Repetición de celo',
+    'Destete - Servicio',
+    'Partos/Hembra/Año',
+    'Destetados/Hembra/Año',
+    'Tasa de parición',
+    'Intervalo entre Partos',
+    'Kg/Destetados/Hembra/Año'
+  ];
+  if (!rd['Reproductivo']) rd['Reproductivo'] = [];
+  for (var rp = 14; rp < 70; rp++) {
+    var ap = String(cv(ws,rp,0) || '').trim();
+    var bp = cv(ws,rp,1), cp = cv(ws,rp,2);
+    if (PRE_VARS.indexOf(ap) >= 0) {
+      var vp = pn(bp), pp = pn(cp);
+      // For Repeticion de celo: value=col B (cantidad), pct=col C (%)
+      // For DNP, Stock medio, D-S: value=col B
+      if (vp !== null || pp !== null) {
+        // avoid duplicates
+        var already = rd['Reproductivo'].some(function(x){ return x.name === ap; });
+        if (!already) rd['Reproductivo'].push({name: ap, value: vp, pct: pp, med: null});
+      }
+    }
+  }
+
   for (var r = 14; r <= rng.e.r; r++) {
     var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2);
     if (a == null) continue;
@@ -761,7 +790,7 @@ function parseWb(wb) {
   for (var seg in rd) {
     rd[seg].forEach(function(v) {
       var num = v.value !== null ? v.value : v.pct;
-      if (num !== null && num !== 0) av.push({seg:seg, name:v.name, value:num, pct:v.pct, med:v.med});
+      if (num !== null) av.push({seg:seg, name:v.name, value:num, pct:v.pct, med:v.med});
     });
   }
 
@@ -1326,6 +1355,35 @@ function parseWb(wb) {
     }
   }
 
+  // Pre-capture variables that appear BEFORE any segment header (rows ~28-60)
+  // These include: Stock medio, DNP, Repeticion de celo, Destete-Servicio
+  var PRE_VARS = [
+    'Stock medio de madres activas',
+    'Media de días no productivos',
+    'Repetición de celo',
+    'Destete - Servicio',
+    'Partos/Hembra/Año',
+    'Destetados/Hembra/Año',
+    'Tasa de parición',
+    'Intervalo entre Partos',
+    'Kg/Destetados/Hembra/Año'
+  ];
+  if (!rd['Reproductivo']) rd['Reproductivo'] = [];
+  for (var rp = 14; rp < 70; rp++) {
+    var ap = String(cv(ws,rp,0) || '').trim();
+    var bp = cv(ws,rp,1), cp = cv(ws,rp,2);
+    if (PRE_VARS.indexOf(ap) >= 0) {
+      var vp = pn(bp), pp = pn(cp);
+      // For Repeticion de celo: value=col B (cantidad), pct=col C (%)
+      // For DNP, Stock medio, D-S: value=col B
+      if (vp !== null || pp !== null) {
+        // avoid duplicates
+        var already = rd['Reproductivo'].some(function(x){ return x.name === ap; });
+        if (!already) rd['Reproductivo'].push({name: ap, value: vp, pct: pp, med: null});
+      }
+    }
+  }
+
   for (var r = 14; r <= rng.e.r; r++) {
     var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2);
     if (a == null) continue;
@@ -1363,7 +1421,7 @@ function parseWb(wb) {
   for (var seg in rd) {
     rd[seg].forEach(function(v) {
       var num = v.value !== null ? v.value : v.pct;
-      if (num !== null && num !== 0) av.push({seg:seg, name:v.name, value:num, pct:v.pct, med:v.med});
+      if (num !== null) av.push({seg:seg, name:v.name, value:num, pct:v.pct, med:v.med});
     });
   }
 
