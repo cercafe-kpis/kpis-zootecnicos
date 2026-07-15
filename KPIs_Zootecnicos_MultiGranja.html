@@ -1142,7 +1142,7 @@ function calcKPIs() {
       kpis.push({seg:'Maternidad',icon:'🧬',title:'Aprovechamiento Genético del Nacimiento (%)',
         desc:'De cada 100 concebidos que llegan a término, ¿cuántos nacen vivos?',
         fml:'NV/Total×100 = '+nv+'/'+tn+'×100',
-        val:aprov.toFixed(1),unit:'% concebidos que nacen vivos',bench:'> 92% TN Colombia | > 90% Porkcolombia',
+        val:aprov.toFixed(1),unit:'% concebidos que nacen vivos',bench:'> 92% TN | > 90% Porkcolombia',
         ctx:aprov>=92?'✓ Excelente aprovechamiento genético.':'⚠ Se pierden '+((nm||0)+(momif||0))+' animales al nacer. Panel diagnóstico: Parvovirus, PRRS, Leptospira.'});
     }
   }
@@ -1151,7 +1151,7 @@ function calcKPIs() {
     kpis.push({seg:'Reproductivo',icon:'⏱',title:'Partos Perdidos por Intervalo Destete-Servicio',
       desc:'Partos/año que la granja deja de producir por días extra entre destete y primer servicio.',
       fml:'Madres×(exceso/IEP) = '+(stockM||'N/A')+'×('+exc.toFixed(1)+'/'+fn(ip)+')',
-      val:perdG.toFixed(2),unit:'partos perdidos/año',bench:'0 partos (IDS ≤ 5 días — TN Colombia)',
+      val:perdG.toFixed(2),unit:'partos perdidos/año',bench:'0 partos (IDS ≤ 5 días — TN)',
       ctx:exc<=0?'✓ IDS dentro del rango óptimo TN.':'⚠ '+fn(ds)+' días IDS, '+exc.toFixed(1)+' de exceso. Costo: '+perdG.toFixed(1)+' partos/año.'});
   }
   if(dha&&kgV) {
@@ -1159,7 +1159,7 @@ function calcKPIs() {
     kpis.push({seg:'Reproductivo',icon:'🐖',title:'Kg de Carne por Lechón Destetado',
       desc:'Si es bajo, el problema está en levante/ceba, no en reproductoras.',
       fml:'Kg vendidos/Ha/Año ÷ Destetados/Ha/Año = '+fn(kgV)+' ÷ '+fn(dha),
-      val:kpL.toFixed(1),unit:'kg carne/lechón destetado',bench:'> 90 kg TN Colombia | > 85 kg Porkcolombia',
+      val:kpL.toFixed(1),unit:'kg carne/lechón destetado',bench:'> 90 kg TN | > 85 kg Porkcolombia',
       ctx:kpL>=90?'✓ Buena conversión de lechones a carne.':'⚠ Valor bajo indica mortalidad alta o bajo peso de salida en levante/ceba.'});
   }
 }
@@ -1773,7 +1773,7 @@ function calcKPIs() {
       kpis.push({seg:'Maternidad',icon:'🧬',title:'Aprovechamiento Genético del Nacimiento (%)',
         desc:'De cada 100 concebidos que llegan a término, ¿cuántos nacen vivos?',
         fml:'NV/Total×100 = '+nv+'/'+tn+'×100',
-        val:aprov.toFixed(1),unit:'% concebidos que nacen vivos',bench:'> 92% TN Colombia | > 90% Porkcolombia',
+        val:aprov.toFixed(1),unit:'% concebidos que nacen vivos',bench:'> 92% TN | > 90% Porkcolombia',
         ctx:aprov>=92?'✓ Excelente aprovechamiento genético.':'⚠ Se pierden '+((nm||0)+(momif||0))+' animales al nacer. Panel diagnóstico: Parvovirus, PRRS, Leptospira.'});
     }
   }
@@ -1782,7 +1782,7 @@ function calcKPIs() {
     kpis.push({seg:'Reproductivo',icon:'⏱',title:'Partos Perdidos por Intervalo Destete-Servicio',
       desc:'Partos/año que la granja deja de producir por días extra entre destete y primer servicio.',
       fml:'Madres×(exceso/IEP) = '+(stockM||'N/A')+'×('+exc.toFixed(1)+'/'+fn(ip)+')',
-      val:perdG.toFixed(2),unit:'partos perdidos/año',bench:'0 partos (IDS ≤ 5 días — TN Colombia)',
+      val:perdG.toFixed(2),unit:'partos perdidos/año',bench:'0 partos (IDS ≤ 5 días — TN)',
       ctx:exc<=0?'✓ IDS dentro del rango óptimo TN.':'⚠ '+fn(ds)+' días IDS, '+exc.toFixed(1)+' de exceso. Costo: '+perdG.toFixed(1)+' partos/año.'});
   }
   if(dha&&kgV) {
@@ -1790,7 +1790,7 @@ function calcKPIs() {
     kpis.push({seg:'Reproductivo',icon:'🐖',title:'Kg de Carne por Lechón Destetado',
       desc:'Si es bajo, el problema está en levante/ceba, no en reproductoras.',
       fml:'Kg vendidos/Ha/Año ÷ Destetados/Ha/Año = '+fn(kgV)+' ÷ '+fn(dha),
-      val:kpL.toFixed(1),unit:'kg carne/lechón destetado',bench:'> 90 kg TN Colombia | > 85 kg Porkcolombia',
+      val:kpL.toFixed(1),unit:'kg carne/lechón destetado',bench:'> 90 kg TN | > 85 kg Porkcolombia',
       ctx:kpL>=90?'✓ Buena conversión de lechones a carne.':'⚠ Valor bajo indica mortalidad alta o bajo peso de salida en levante/ceba.'});
   }
 }
@@ -1831,10 +1831,10 @@ function renderEstrategia() {
   var vers  = criticosFiltE.filter(function(c){return c.col==='verde';});
 
   rojos.forEach(function(c) {
-    var acts = ACT[c.title] || ['Revisar con equipo técnico','Comparar históricos','Consultar asesor TN Colombia','Establecer plan de mejora semanal'];
+    var acts = ACT[c.title] || ['Revisar con equipo técnico','Comparar históricos','Consultar asesor TN','Establecer plan de mejora semanal'];
     html += '<div class="est-card"><div class="est-prio rojo">🔴 PRIORIDAD '+priNum+' — INMEDIATA</div>' +
       '<div class="est-title">'+c.title+'</div>' +
-      '<div class="est-when">Esta semana · Valor: '+c.value+' | Crítico vs TN Colombia</div>' +
+      '<div class="est-when">Esta semana · Valor: '+c.value+' | Crítico vs TN</div>' +
       acts.map(function(a){return '<div class="est-item">'+a+'</div>';}).join('') +
       '<div class="est-impact">🎯 Meta: llevar a rango verde. Ref: '+c.bench+'</div></div>';
     priNum++;
@@ -1843,7 +1843,7 @@ function renderEstrategia() {
     var acts = ACT[c.title] || ['Revisar con equipo técnico','Establecer plan de mejora'];
     html += '<div class="est-card"><div class="est-prio amarillo">🟡 PRIORIDAD '+priNum+' — 2-4 SEMANAS</div>' +
       '<div class="est-title">'+c.title+'</div>' +
-      '<div class="est-when">Próximas semanas · Valor: '+c.value+' | Alerta vs TN Colombia</div>' +
+      '<div class="est-when">Próximas semanas · Valor: '+c.value+' | Alerta vs TN</div>' +
       acts.slice(0,3).map(function(a){return '<div class="est-item">'+a+'</div>';}).join('') +
       '<div class="est-impact">🎯 Meta: alcanzar rango verde TN. Ref: '+c.bench+'</div></div>';
     priNum++;
@@ -1988,7 +1988,7 @@ function renderBM() {
     '<div class="bm-sc"><div class="bm-sk">🏆 Mejor granja</div><div class="bm-sv" style="color:#15803d">'+(best?(best.nombre||best.farm):'—')+'</div><div class="bm-ss">'+(best?best.val.toFixed(fmt):'')+'</div></div>' +
     '<div class="bm-sc"><div class="bm-sk">📊 Promedio red</div><div class="bm-sv" style="color:#1060a8">'+avg.toFixed(fmt)+'</div><div class="bm-ss">'+rows.length+' granjas · ponderado por madres</div></div>' +
     '<div class="bm-sc"><div class="bm-sk">💪 Más retada</div><div class="bm-sv" style="color:#dc2626">'+(worst?(worst.nombre||worst.farm):'—')+'</div><div class="bm-ss">'+(worst?worst.val.toFixed(fmt):'')+'</div></div>' +
-    '<div class="bm-sc"><div class="bm-sk">🎯 Meta TN Colombia</div><div class="bm-sv" style="color:#7b1010">'+(bm?(bm.hi?'>':'<')+bm.opt:'—')+'</div><div class="bm-ss">'+(bm?bm.fu:'')+'</div></div>';
+    '<div class="bm-sc"><div class="bm-sk">🎯 Meta TN</div><div class="bm-sv" style="color:#7b1010">'+(bm?(bm.hi?'>':'<')+bm.opt:'—')+'</div><div class="bm-ss">'+(bm?bm.fu:'')+'</div></div>';
 
   // Chart
   if (bmChart) { bmChart.destroy(); bmChart = null; }
@@ -2004,7 +2004,7 @@ function renderBM() {
     return base;
   });
   var datasets = [{label: kpiLabel, data:data, backgroundColor:colors, borderWidth:1}];
-  if (bm) datasets.push({label:'Meta TN Colombia', data:Array(data.length).fill(bm.opt), type:'line', borderColor:'#7b1010', borderWidth:2, borderDash:[6,3], pointRadius:0, fill:false});
+  if (bm) datasets.push({label:'Meta TN', data:Array(data.length).fill(bm.opt), type:'line', borderColor:'#7b1010', borderWidth:2, borderDash:[6,3], pointRadius:0, fill:false});
   bmChart = new Chart(document.getElementById('bmChart'), {
     type:'bar',
     data:{labels:labels, datasets:datasets},
@@ -2136,7 +2136,7 @@ function renderHeatmap(farms, ownFarms) {
 
   // Leyenda de colores
   html += '<div style="display:flex;align-items:center;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:11px;color:#374151;">' +
-    '<span style="font-weight:600;color:#6b7280;">Semáforo vs meta TN Colombia:</span>' +
+    '<span style="font-weight:600;color:#6b7280;">Semáforo vs meta TN:</span>' +
     '<span style="display:flex;align-items:center;gap:5px;">' +
       '<span style="width:14px;height:14px;border-radius:3px;background:rgba(21,128,61,.15);border:1px solid #15803d;display:inline-block;"></span>' +
       '<span style="color:#15803d;font-weight:600;">Verde</span> — Cumple la meta' +
@@ -2164,7 +2164,7 @@ function renderHeatmap(farms, ownFarms) {
 function expData() {
   if (!Object.keys(rawData).length){toast('Selecciona una granja',1);return;}
   var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Granja',farmName],['Fecha',new Date().toLocaleDateString('es-CO')],['Fuentes','TN Colombia | Porkcolombia | 333 Latam']]),'Info');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Granja',farmName],['Fecha',new Date().toLocaleDateString('es-CO')],['Fuentes','TN | Porkcolombia | 333 Latam']]),'Info');
   for(var s in rawData){var rows=[['Variable','Valor','%']];rawData[s].forEach(function(v){rows.push([v.name,v.value,v.pct]);});var ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:45},{wch:14},{wch:14}];XLSX.utils.book_append_sheet(wb,ws,s.substring(0,31));}
   XLSX.writeFile(wb,'datos_'+farmName.replace(/ /g,"_")+'.xlsx');toast('Datos exportados');
 }
@@ -2173,7 +2173,7 @@ function expCriticos() {
   var rows=[['Indicador','Valor','Benchmark','Semáforo','Diagnóstico']];
   criticos.forEach(function(c){rows.push([c.title,c.value,c.bench,c.col==='rojo'?'CRÍTICO':c.col==='amarillo'?'ALERTA':'OK',c.desc]);});
   var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:35},{wch:22},{wch:55},{wch:12},{wch:90}];
-  XLSX.utils.book_append_sheet(wb,ws,'Semáforo vs TN Colombia');XLSX.writeFile(wb,'semaforo_'+farmName.replace(/ /g,"_")+'.xlsx');toast('Exportado');
+  XLSX.utils.book_append_sheet(wb,ws,'Semáforo vs TN');XLSX.writeFile(wb,'semaforo_'+farmName.replace(/ /g,"_")+'.xlsx');toast('Exportado');
 }
 function expKPI() {
   if(!kpis.length){toast('Sin KPIs',1);return;}
