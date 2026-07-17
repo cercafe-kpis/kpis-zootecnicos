@@ -1091,18 +1091,18 @@ function renderTopTN() {
   }
   var farmsList = farms.map(function(f){ return nombreGranja(f); }).join(', ');
   
-  var html = '<div style="margin-bottom:12px;padding:10px 14px;background:#fff8f0;border:1px solid #fed7aa;border-radius:6px;font-size:11px;color:#92400e;">' +
+  var html = '<div style="margin-bottom:12px;padding:10px 14px;background:#fff8f0;border:1px solid #fed7aa;border-radius:6px;font-size:12px;color:#92400e;">' +
     '<strong>📅 Período:</strong> ' + (periodoText || '—') + ' &nbsp;|&nbsp; ' +
     '<strong>🏠 Granjas incluidas (' + farms.length + '):</strong> ' + farmsList +
     '</div>';
 
   // Build table
-  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
   html += '<thead><tr>' +
-    '<th style="text-align:left;padding:10px 12px;background:#7b1010;color:#fff;border-radius:4px 0 0 0;">Característica</th>' +
-    '<th style="padding:10px 12px;background:#7b1010;color:#fff;text-align:center;">Todas las Granjas</th>' +
-    '<th style="padding:10px 12px;background:#c0392b;color:#fff;text-align:center;">Top 5 granjas</th>' +
-    '<th style="padding:10px 12px;background:#e74c3c;color:#fff;text-align:center;border-radius:0 4px 0 0;">Top 3 granjas</th>' +
+    '<th style="text-align:left;padding:10px 14px;background:#7b1010;color:#fff;border-radius:4px 0 0 0;font-size:14px;">Característica</th>' +
+    '<th style="padding:10px 14px;background:#7b1010;color:#fff;text-align:center;font-size:14px;">Todas las Granjas</th>' +
+    '<th style="padding:10px 12px;background:#c0392b;color:#fff;text-align:center;font-size:14px;">Top 5 granjas</th>' +
+    '<th style="padding:14px 16px;background:#15803d;color:#fff;text-align:center;border-radius:0 4px 0 0;font-size:16px;font-weight:800;">🏆 Top 3 granjas</th>' +
     '</tr></thead><tbody>';
 
   TOP_KPIS.forEach(function(kpi, idx) {
@@ -1121,10 +1121,10 @@ function renderTopTN() {
     }
 
     html += '<tr style="background:'+bg+';">' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#374151;">'+kpi.label+'</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#374151;">'+fmt(allVal)+'</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#c0392b;">'+fmt(top5Val)+'</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#e74c3c;">'+fmt(top3Val)+'</td>' +
+      '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;color:#374151;font-size:14px;">'+kpi.label+'</td>' +
+      '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#374151;font-size:14px;">'+fmt(allVal)+'</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#c0392b;font-size:13px;">'+fmt(top5Val)+'</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #d1fae5;text-align:center;font-weight:800;color:#15803d;font-size:16px;background:#f0fdf4;">'+fmt(top3Val)+'</td>' +
       '</tr>';
   });
 
