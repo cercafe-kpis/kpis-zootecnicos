@@ -1017,9 +1017,9 @@ function renderTopTN() {
     return gv2(fname,'Stock medio de madres activas') || 1;
   }
 
-  // Sort farms by PHA for top5/top3 ranking
+  // Sort farms by Destetados/Hembra/Año for top5/top3 ranking
   var farmsWithPHA = farms.map(function(f){
-    return {farm:f, pha: gv2(f,'Partos/Hembra/Año')||0, stock: getStock(f)};
+    return {farm:f, pha: gv2(f,'Destetados/Hembra/Año')||0, stock: getStock(f)};
   }).filter(function(x){return x.pha>0;});
   farmsWithPHA.sort(function(a,b){return b.pha-a.pha;});
 
