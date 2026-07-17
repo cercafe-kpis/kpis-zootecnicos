@@ -1629,6 +1629,11 @@ function parseWb(wb) {
 }
 
 function finalizeLoad() {
+  // Show TOP TN tab only in admin mode
+  var topBtn = document.getElementById('modeTopBtn');
+  if (topBtn && !document.body.classList.contains('modo-asociado')) {
+    topBtn.style.display = 'inline-block';
+  }
   var names = Object.keys(allFarms);
   if (!names.length) return;
 
