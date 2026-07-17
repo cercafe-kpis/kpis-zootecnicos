@@ -1036,8 +1036,21 @@ function renderTopTN() {
     return sumW>0 ? sumV/sumW : null;
   }
 
+  // Info note
+  var periodoText = '';
+  var farmNames2 = Object.keys(allFarms);
+  if (farmNames2.length > 0 && allFarms[farmNames2[0]].periodo) {
+    periodoText = allFarms[farmNames2[0]].periodo;
+  }
+  var farmsList = farms.map(function(f){ return nombreGranja(f); }).join(', ');
+  
+  var html = '<div style="margin-bottom:12px;padding:10px 14px;background:#fff8f0;border:1px solid #fed7aa;border-radius:6px;font-size:11px;color:#92400e;">' +
+    '<strong>📅 Período:</strong> ' + (periodoText || '—') + ' &nbsp;|&nbsp; ' +
+    '<strong>🏠 Granjas incluidas (' + farms.length + '):</strong> ' + farmsList +
+    '</div>';
+
   // Build table
-  var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
   html += '<thead><tr>' +
     '<th style="text-align:left;padding:10px 12px;background:#7b1010;color:#fff;border-radius:4px 0 0 0;">Característica</th>' +
     '<th style="padding:10px 12px;background:#7b1010;color:#fff;text-align:center;">Todas las Granjas</th>' +
@@ -1088,8 +1101,18 @@ function exportTopTN() {
   var farms = cont._farms;
   var h = cont._helpers;
 
+  // Get period and farms info
+  var farmNames3 = Object.keys(allFarms);
+  var periodoExp = farmNames3.length > 0 && allFarms[farmNames3[0]].periodo ? allFarms[farmNames3[0]].periodo : '—';
+  var farmsExp = farms.all.map(function(f){ return nombreGranja(f); }).join(', ');
+
   var header = ['Característica','Todas las Granjas','Top 5 granjas','Top 3 granjas'];
-  var rows = [header];
+  var rows = [
+    ['Período: ' + periodoExp, '', '', ''],
+    ['Granjas incluidas (' + farms.all.length + '): ' + farmsExp, '', '', ''],
+    ['', '', '', ''],
+    header
+  ];
 
   kpis.forEach(function(kpi) {
     var allVal  = h.wavg(farms.all,  kpi.get);
