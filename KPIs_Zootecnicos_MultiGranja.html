@@ -446,6 +446,21 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
           <button onclick="seleccionarTodasTopTN(false)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">Ninguna</button>
           <span style="font-size:11px;color:#9ca3af;" id="topTNFiltroCount"></span>
         </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:600;color:#374151;">🏆 Ordenar Top por:</span>
+          <select id="topTNKpiSel" onchange="actualizarFiltroTopTN()" style="font-size:12px;border:1px solid #d1d5db;border-radius:5px;padding:4px 8px;color:#374151;background:#fff;cursor:pointer;">
+            <option value="dha">Destetados/Hembra/Año</option>
+            <option value="pha">Partos/Hembra/Año</option>
+            <option value="nacTot">Nacimientos Total Media</option>
+            <option value="nv">Nacimientos Vivos Media</option>
+            <option value="destCam">Destetados relac. dest., Media</option>
+            <option value="tpar">Tasa de parición, %</option>
+            <option value="srv7">Servicio hasta 7 días, %</option>
+            <option value="rep">Repetición de celo, % (menor=mejor)</option>
+            <option value="ds">Destete - Servicio (menor=mejor)</option>
+            <option value="mortmat">Muertes en el período, % (menor=mejor)</option>
+          </select>
+        </div>
         <div id="topTNCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
       </div>
     </div>
@@ -1017,11 +1032,43 @@ function renderTopTN() {
     return gv2(fname,'Stock medio de madres activas') || 1;
   }
 
-  // Sort farms by Destetados/Hembra/Año for top5/top3 ranking
+  // Sort farms by selected indicator for top5/top3 ranking
+  var topKpiSel = document.getElementById('topTNKpiSel');
+  var topKpiVal = topKpiSel ? topKpiSel.value : 'dha';
+  var topKpiLower = ['rep','ds','mortmat'].indexOf(topKpiVal) >= 0; // lower is better
+
+  function getTopKpiVal(f) {
+    switch(topKpiVal) {
+      case 'dha':     return gv2(f,'Destetados/Hembra/Año');
+      case 'pha':     return gv2(f,'Partos/Hembra/Año');
+      case 'nacTot':  return (function(){
+        var av=allFarms[f]?allFarms[f].allVars:[];
+        var v=av.find(function(x){return x.name==='Promedio nacidos totales/camada';});
+        return v?v.value:null;
+      })();
+      case 'nv':      return (function(){
+        var av=allFarms[f]?allFarms[f].allVars:[];
+        var v=av.find(function(x){return x.name==='Vivos'&&x.med!=null;});
+        return v?v.med:null;
+      })();
+      case 'destCam': return (function(){
+        var av=allFarms[f]?allFarms[f].allVars:[];
+        var v=av.find(function(x){return x.name==='Destetados relac. dest.'&&x.med!=null;});
+        return v?v.med:null;
+      })();
+      case 'tpar':    return gp2(f,'Tasa de parición');
+      case 'srv7':    return gp2(f,'Servicio hasta 7 días');
+      case 'rep':     return gp2(f,'Repetición de celo');
+      case 'ds':      return gv2(f,'Destete - Servicio');
+      case 'mortmat': return gp2(f,'Muertes en el período');
+      default:        return gv2(f,'Destetados/Hembra/Año');
+    }
+  }
+
   var farmsWithPHA = farms.map(function(f){
-    return {farm:f, pha: gv2(f,'Destetados/Hembra/Año')||0, stock: getStock(f)};
+    return {farm:f, pha: getTopKpiVal(f)||0, stock: getStock(f)};
   }).filter(function(x){return x.pha>0;});
-  farmsWithPHA.sort(function(a,b){return b.pha-a.pha;});
+  farmsWithPHA.sort(function(a,b){ return topKpiLower ? a.pha-b.pha : b.pha-a.pha; });
 
   var top5farms = farmsWithPHA.slice(0,5).map(function(x){return x.farm;});
   var top3farms = farmsWithPHA.slice(0,3).map(function(x){return x.farm;});
