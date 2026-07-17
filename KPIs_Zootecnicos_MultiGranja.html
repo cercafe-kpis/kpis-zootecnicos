@@ -858,14 +858,46 @@ function renderTopTN() {
   var TOP_KPIS = [
     {label:'Stock medio de madres activas',  get: function(f){ return gv2(f,'Stock medio de madres activas'); }, fmt:0, ponder:false},
     {label:'Partos/Hembra/Año',              get: function(f){ return gv2(f,'Partos/Hembra/Año'); },            fmt:2, hi:true, ponder:true},
-    {label:'Mortalidad de hembras, % Período',get:function(f){ return gseg2(f,'Mortalidad de hembras','% Período','value'); }, fmt:2, hi:false, ponder:true},
+    {label:'Mortalidad de hembras, % Período',get:function(f){
+      var rd = allFarms[f] ? allFarms[f].rawData : {};
+      if (rd && rd['Mortalidad de hembras']) {
+        var found = rd['Mortalidad de hembras'].find(function(x){return x.name==='% Período';});
+        if (found && found.value!=null) return found.value;
+      }
+      return null;
+    }, fmt:2, hi:false, ponder:true},
     {label:'Edad - 1er Servicio',            get: function(f){ return gv2(f,'Edad - 1er Servicio'); },          fmt:1, hi:false, ponder:true},
     {label:'Repetición de celo, %',          get: function(f){ return gp2(f,'Repetición de celo'); },           fmt:2, hi:false, ponder:true},
     {label:'Destete - Servicio',             get: function(f){ return gv2(f,'Destete - Servicio'); },           fmt:1, hi:false, ponder:true},
     {label:'Servicio hasta 7 días, %',       get: function(f){ return gp2(f,'Servicio hasta 7 días'); },        fmt:1, hi:true,  ponder:true},
     {label:'Tasa de parición, %',            get: function(f){ return gp2(f,'Tasa de parición'); },             fmt:1, hi:true,  ponder:true},
-    {label:'Nacimientos, Total, Media',      get: function(f){ return gm2(f,'Total','Nacimientos'); },          fmt:2, hi:true,  ponder:true},
-    {label:'Nacimientos, Vivos, Media',      get: function(f){ return gm2(f,'Vivos','Nacimientos'); },          fmt:2, hi:true,  ponder:true},
+    {label:'Nacimientos, Total, Media',      get: function(f){
+      var rd = allFarms[f] ? allFarms[f].rawData : {};
+      if (rd && rd['Maternidad']) {
+        // Find 'Total' after 'Nacimientos' subsection
+        var inNac=false;
+        for(var i=0;i<rd['Maternidad'].length;i++){
+          var x=rd['Maternidad'][i];
+          if(x.name==='Nacimientos'){inNac=true;continue;}
+          if(inNac&&x.name==='Total'&&x.med!=null) return x.med;
+          if(inNac&&x.name==='Peso (Kg)') break; // end of nacimientos
+        }
+      }
+      return null;
+    }, fmt:2, hi:true, ponder:true},
+    {label:'Nacimientos, Vivos, Media',      get: function(f){
+      var rd = allFarms[f] ? allFarms[f].rawData : {};
+      if (rd && rd['Maternidad']) {
+        var inNac=false;
+        for(var i=0;i<rd['Maternidad'].length;i++){
+          var x=rd['Maternidad'][i];
+          if(x.name==='Nacimientos'){inNac=true;continue;}
+          if(inNac&&x.name==='Vivos'&&x.med!=null) return x.med;
+          if(inNac&&x.name==='Peso (Kg)') break;
+        }
+      }
+      return null;
+    }, fmt:2, hi:true, ponder:true},
     {label:'Nacidos muertos + Momificados, %',get:function(f){
       var nm=gp2(f,'Nacidos muertos'), mo=gp2(f,'Momificados');
       return (nm!==null&&mo!==null)?nm+mo:null; },                                                              fmt:2, hi:false, ponder:true},
@@ -881,17 +913,33 @@ function renderTopTN() {
   }
   function gp2(fname, varname) {
     var av = allFarms[fname] ? allFarms[fname].allVars : [];
-    var v = av.find(function(x){return x.name===varname;}); return v?v.pct:null;
+    var v = av.find(function(x){return x.name===varname;}); return v&&v.pct!=null?v.pct:null;
   }
   function gm2(fname, varname, segCtx) {
     var av = allFarms[fname] ? allFarms[fname].allVars : [];
-    // filter by seg context if provided
-    var matches = av.filter(function(x){return x.name===varname && (!segCtx || x.seg===segCtx || !x.seg);});
-    var v = matches[0]; return v?v.med:null;
+    // Try to find by name, prefer med, fallback to value
+    var matches = av.filter(function(x){return x.name===varname;});
+    if (segCtx) {
+      // Try with rawData directly for more accurate seg lookup
+      var rd = allFarms[fname] ? allFarms[fname].rawData : {};
+      if (rd && rd['Maternidad']) {
+        var found = rd['Maternidad'].find(function(x){return x.name===varname;});
+        if (found && found.med!=null) return found.med;
+      }
+    }
+    var v = matches[0]; return v?(v.med!=null?v.med:null):null;
   }
   function gseg2(fname, seg, varname, col) {
+    // For Mortalidad de hembras % Periodo — read from rawData directly
+    var rd = allFarms[fname] ? allFarms[fname].rawData : {};
+    // Try segment directly
+    if (rd && rd[seg]) {
+      var found = rd[seg].find(function(x){return x.name===varname;});
+      if (found) return col==='pct'?found.pct:found.value;
+    }
+    // Fallback: search allVars
     var av = allFarms[fname] ? allFarms[fname].allVars : [];
-    var v = av.find(function(x){return x.seg===seg && x.name===varname;});
+    var v = av.find(function(x){return x.name===varname;});
     if (!v) return null;
     return col==='pct'?v.pct:v.value;
   }
