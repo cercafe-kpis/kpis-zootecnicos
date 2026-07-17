@@ -6,6 +6,7 @@
 <title>KPIs Zootécnicos con Propósito</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- SharePoint auth via OAuth2 implicit flow - no external library needed -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -436,6 +437,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <h2>📊 TOP TN — Resumen Cercafe</h2>
       <div style="display:flex;gap:8px;margin-left:auto;">
         <button class="btn sec" onclick="exportTopTN()">↓ Exportar Excel</button>
+        <button class="btn sec" onclick="exportTopTNImage()" style="margin-left:6px;">🖼 Exportar imagen</button>
       </div>
     </div>
     <div style="padding:16px 16px 0 16px;">
@@ -1139,6 +1141,33 @@ function renderTopTN() {
   cont._topKpis = TOP_KPIS;
   cont._farms = {all:farms, top5:top5farms, top3:top3farms};
   cont._helpers = {gv2:gv2, gp2:gp2, gm2:gm2, gseg2:gseg2, wavg:wavg, getStock:getStock};
+}
+
+function exportTopTNImage() {
+  var el = document.getElementById('topTNContent');
+  if (!el) return;
+  // Temporarily hide filter checkboxes for cleaner capture
+  var filtros = document.getElementById('topTNFiltros');
+  var filtrosDisplay = filtros ? filtros.style.display : '';
+  if (filtros) filtros.style.display = 'none';
+
+  html2canvas(el, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    logging: false
+  }).then(function(canvas) {
+    if (filtros) filtros.style.display = filtrosDisplay;
+    var link = document.createElement('a');
+    link.download = 'TOP_TN_Cercafe.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('✅ Imagen exportada');
+  }).catch(function(e) {
+    if (filtros) filtros.style.display = filtrosDisplay;
+    toast('Error al exportar imagen');
+    console.error(e);
+  });
 }
 
 function exportTopTN() {
