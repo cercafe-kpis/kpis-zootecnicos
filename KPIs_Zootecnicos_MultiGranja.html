@@ -889,13 +889,16 @@ function renderTopTN() {
         for(var i=0;i<rd['Maternidad'].length;i++){
           var x=rd['Maternidad'][i];
           if(x.name==='Nacimientos'){inNac=true;continue;}
-          if(inNac&&x.name==='Total'&&x.med!=null) return x.med;
+          if(inNac&&(x.name==='Total'||x.name==='Total nacidos (cantidad)')&&x.med!=null) return x.med;
           if(inNac&&x.name==='Peso (Kg)') break; // end of nacimientos
         }
       }
       return null;
     }, fmt:2, hi:true, ponder:true},
     {label:'Nacimientos, Vivos, Media',      get: function(f){
+      var av = allFarms[f] ? allFarms[f].allVars : [];
+      var v = av.find(function(x){return x.name==='Vivos' && x.med!=null;});
+      if (v) return v.med;
       var rd = allFarms[f] ? allFarms[f].rawData : {};
       if (rd && rd['Maternidad']) {
         var inNac=false;
