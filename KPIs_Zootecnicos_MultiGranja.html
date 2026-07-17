@@ -438,7 +438,18 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
         <button class="btn sec" onclick="exportTopTN()">↓ Exportar Excel</button>
       </div>
     </div>
-    <div style="padding:16px;" id="topTNContent">
+    <div style="padding:16px 16px 0 16px;">
+      <div id="topTNFiltros" style="display:none;margin-bottom:12px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:600;color:#374151;">🔽 Filtrar granjas:</span>
+          <button onclick="seleccionarTodasTopTN(true)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #7b1010;background:#7b1010;color:#fff;cursor:pointer;">Todas</button>
+          <button onclick="seleccionarTodasTopTN(false)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">Ninguna</button>
+          <span style="font-size:11px;color:#9ca3af;" id="topTNFiltroCount"></span>
+        </div>
+        <div id="topTNCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px 16px;" id="topTNContent">
       <div class="empty"><div class="ei">📊</div><p>Carga granjas para ver el resumen TOP TN</p></div>
     </div>
   </div>
@@ -854,11 +865,58 @@ function parseWb(wb) {
   farmName = savedFarm; rawData = savedRD; allVars = savedAV; criticos = savedC; kpis = savedK;
 }
 
+var _topTNSelectedFarms = null; // null = all farms
+
+function seleccionarTodasTopTN(selectAll) {
+  var cbs = document.querySelectorAll('.toptn-cb');
+  cbs.forEach(function(cb){ cb.checked = selectAll; });
+  actualizarFiltroTopTN();
+}
+
+function actualizarFiltroTopTN() {
+  var cbs = document.querySelectorAll('.toptn-cb');
+  var selected = [];
+  cbs.forEach(function(cb){ if(cb.checked) selected.push(cb.value); });
+  _topTNSelectedFarms = selected;
+  var count = document.getElementById('topTNFiltroCount');
+  if (count) count.textContent = selected.length + ' granjas seleccionadas';
+  renderTopTN();
+}
+
+function buildTopTNFilter(farms) {
+  var wrap = document.getElementById('topTNCheckboxes');
+  var filtros = document.getElementById('topTNFiltros');
+  if (!wrap || !filtros) return;
+  filtros.style.display = 'block';
+  
+  // Initialize selected farms if not set
+  if (!_topTNSelectedFarms) _topTNSelectedFarms = farms.slice();
+  
+  wrap.innerHTML = farms.map(function(f) {
+    var checked = _topTNSelectedFarms.indexOf(f) >= 0 ? 'checked' : '';
+    var asoc = allFarms[f] ? allFarms[f].asociado : '';
+    return '<label style="display:flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:4px;cursor:pointer;">' +
+      '<input type="checkbox" class="toptn-cb" value="'+f+'" '+checked+' onchange="actualizarFiltroTopTN()"> ' +
+      nombreGranja(f) + ' <span style="color:#9ca3af;">['+asoc+']</span></label>';
+  }).join('');
+  
+  var count = document.getElementById('topTNFiltroCount');
+  if (count) count.textContent = _topTNSelectedFarms.length + ' granjas seleccionadas';
+}
+
 function renderTopTN() {
   var cont = document.getElementById('topTNContent');
   if (!cont) return;
 
-  var farms = Object.keys(allFarms);
+  var allFarmsKeys = Object.keys(allFarms);
+  // Build filter if first time
+  buildTopTNFilter(allFarmsKeys);
+  
+  // Use selected farms or all
+  var farms = (_topTNSelectedFarms && _topTNSelectedFarms.length > 0) 
+    ? _topTNSelectedFarms.filter(function(f){ return allFarms[f]; })
+    : allFarmsKeys;
+
   if (farms.length === 0) {
     cont.innerHTML = '<div class="empty"><div class="ei">📊</div><p>Carga granjas para ver el resumen TOP TN</p></div>';
     return;
@@ -3053,6 +3111,8 @@ async function cambiarPeriodoAdmin(filename) {
     finalizeLoad();
     toast('✅ ' + loaded + ' granjas — período actualizado');
     logSP('✅ ' + loaded + ' granjas cargadas', '#15803d');
+    // Re-render TOP TN if visible
+    if (document.getElementById('modeTop').style.display !== 'none') renderTopTN();
   }
 }
 
