@@ -14,6 +14,7 @@ body{background:#f0f2f5;color:#1a1a2e;font-family:'Segoe UI',system-ui,sans-seri
 body.modo-asociado #uploadArea{display:none!important;}
 body.modo-asociado #asocSelWrap{display:none!important;}
 body.modo-asociado #spPublishPanel{display:none!important;}
+body.modo-asociado #modeTopBtn{display:none!important;}
 /* TOPBAR */
 .topbar{background:#7b1010;height:50px;display:flex;align-items:center;padding:0 20px;gap:14px;}
 .topbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
@@ -254,6 +255,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
 <div class="modebar">
   <button class="mbtn on" id="modeIndBtn" onclick="setMode('ind')">🏠 Análisis por granja</button>
   <button class="mbtn" id="modeBmBtn" onclick="setMode('bm')">🏆 Benchmarking granjas</button>
+  <button class="mbtn" id="modeTopBtn" onclick="setMode('top')" style="display:none;">📊 TOP TN</button>
 </div>
 
 <div id="farmChips"></div>
@@ -426,6 +428,22 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
   </div>
 </div>
 </div><!-- /modeBm -->
+
+<div id="modeTop" style="display:none;">
+<div class="main">
+  <div class="card">
+    <div class="card-hd">
+      <h2>📊 TOP TN — Resumen Cercafe</h2>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button class="btn sec" onclick="exportTopTN()">↓ Exportar Excel</button>
+      </div>
+    </div>
+    <div style="padding:16px;" id="topTNContent">
+      <div class="empty"><div class="ei">📊</div><p>Carga granjas para ver el resumen TOP TN</p></div>
+    </div>
+  </div>
+</div>
+</div><!-- /modeTop -->
 
 <footer>KPIs Zootécnicos con Propósito · Cercafe · La Carne de Cerdo del Eje Cafetero</footer>
 
@@ -826,7 +844,160 @@ function parseWb(wb) {
   farmName = savedFarm; rawData = savedRD; allVars = savedAV; criticos = savedC; kpis = savedK;
 }
 
+function renderTopTN() {
+  var cont = document.getElementById('topTNContent');
+  if (!cont) return;
+
+  var farms = Object.keys(allFarms);
+  if (farms.length === 0) {
+    cont.innerHTML = '<div class="empty"><div class="ei">📊</div><p>Carga granjas para ver el resumen TOP TN</p></div>';
+    return;
+  }
+
+  // TOP TN KPIs definition
+  var TOP_KPIS = [
+    {label:'Stock medio de madres activas',  get: function(f){ return gv2(f,'Stock medio de madres activas'); }, fmt:0, ponder:false},
+    {label:'Partos/Hembra/Año',              get: function(f){ return gv2(f,'Partos/Hembra/Año'); },            fmt:2, hi:true, ponder:true},
+    {label:'Mortalidad de hembras, % Período',get:function(f){ return gseg2(f,'Mortalidad de hembras','% Período','value'); }, fmt:2, hi:false, ponder:true},
+    {label:'Edad - 1er Servicio',            get: function(f){ return gv2(f,'Edad - 1er Servicio'); },          fmt:1, hi:false, ponder:true},
+    {label:'Repetición de celo, %',          get: function(f){ return gp2(f,'Repetición de celo'); },           fmt:2, hi:false, ponder:true},
+    {label:'Destete - Servicio',             get: function(f){ return gv2(f,'Destete - Servicio'); },           fmt:1, hi:false, ponder:true},
+    {label:'Servicio hasta 7 días, %',       get: function(f){ return gp2(f,'Servicio hasta 7 días'); },        fmt:1, hi:true,  ponder:true},
+    {label:'Tasa de parición, %',            get: function(f){ return gp2(f,'Tasa de parición'); },             fmt:1, hi:true,  ponder:true},
+    {label:'Nacimientos, Total, Media',      get: function(f){ return gm2(f,'Total','Nacimientos'); },          fmt:2, hi:true,  ponder:true},
+    {label:'Nacimientos, Vivos, Media',      get: function(f){ return gm2(f,'Vivos','Nacimientos'); },          fmt:2, hi:true,  ponder:true},
+    {label:'Nacidos muertos + Momificados, %',get:function(f){
+      var nm=gp2(f,'Nacidos muertos'), mo=gp2(f,'Momificados');
+      return (nm!==null&&mo!==null)?nm+mo:null; },                                                              fmt:2, hi:false, ponder:true},
+    {label:'Muertes en el período, %',       get: function(f){ return gp2(f,'Muertes en el período'); },        fmt:2, hi:false, ponder:true},
+    {label:'Destetados relac. dest., Media', get: function(f){ return gm2(f,'Destetados relac. dest.'); },      fmt:2, hi:true,  ponder:true},
+    {label:'Destetados/Hembra/Año',          get: function(f){ return gv2(f,'Destetados/Hembra/Año'); },        fmt:1, hi:true,  ponder:true},
+  ];
+
+  // Helper functions reading from allFarms allVars
+  function gv2(fname, varname) {
+    var av = allFarms[fname] ? allFarms[fname].allVars : [];
+    var v = av.find(function(x){return x.name===varname;}); return v?v.value:null;
+  }
+  function gp2(fname, varname) {
+    var av = allFarms[fname] ? allFarms[fname].allVars : [];
+    var v = av.find(function(x){return x.name===varname;}); return v?v.pct:null;
+  }
+  function gm2(fname, varname, segCtx) {
+    var av = allFarms[fname] ? allFarms[fname].allVars : [];
+    // filter by seg context if provided
+    var matches = av.filter(function(x){return x.name===varname && (!segCtx || x.seg===segCtx || !x.seg);});
+    var v = matches[0]; return v?v.med:null;
+  }
+  function gseg2(fname, seg, varname, col) {
+    var av = allFarms[fname] ? allFarms[fname].allVars : [];
+    var v = av.find(function(x){return x.seg===seg && x.name===varname;});
+    if (!v) return null;
+    return col==='pct'?v.pct:v.value;
+  }
+
+  // Get stock for weighting
+  function getStock(fname) {
+    return gv2(fname,'Stock medio de madres activas') || 1;
+  }
+
+  // Sort farms by PHA for top5/top3 ranking
+  var farmsWithPHA = farms.map(function(f){
+    return {farm:f, pha: gv2(f,'Partos/Hembra/Año')||0, stock: getStock(f)};
+  }).filter(function(x){return x.pha>0;});
+  farmsWithPHA.sort(function(a,b){return b.pha-a.pha;});
+
+  var top5farms = farmsWithPHA.slice(0,5).map(function(x){return x.farm;});
+  var top3farms = farmsWithPHA.slice(0,3).map(function(x){return x.farm;});
+
+  // Weighted average for a list of farms
+  function wavg(farmList, getterFn) {
+    var sumW=0, sumV=0;
+    farmList.forEach(function(f){
+      var v=getterFn(f), w=getStock(f);
+      if(v!==null){sumV+=v*w; sumW+=w;}
+    });
+    return sumW>0 ? sumV/sumW : null;
+  }
+
+  // Build table
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<thead><tr>' +
+    '<th style="text-align:left;padding:10px 12px;background:#7b1010;color:#fff;border-radius:4px 0 0 0;">Característica</th>' +
+    '<th style="padding:10px 12px;background:#7b1010;color:#fff;text-align:center;">Todas las Granjas</th>' +
+    '<th style="padding:10px 12px;background:#c0392b;color:#fff;text-align:center;">Top 5 granjas</th>' +
+    '<th style="padding:10px 12px;background:#e74c3c;color:#fff;text-align:center;border-radius:0 4px 0 0;">Top 3 granjas</th>' +
+    '</tr></thead><tbody>';
+
+  TOP_KPIS.forEach(function(kpi, idx) {
+    var bg = idx%2===0?'#fff':'#fafafa';
+    var allVal  = kpi.ponder ? wavg(farms,   kpi.get) : kpi.get ? (function(){
+      // non-pondered: sum stockes
+      var total=0,cnt=0; farms.forEach(function(f){var v=kpi.get(f); if(v!==null){total+=v;cnt++;}});
+      return cnt?total/cnt:null;
+    })() : null;
+    var top5Val = wavg(top5farms, kpi.get);
+    var top3Val = wavg(top3farms, kpi.get);
+
+    function fmt(v) {
+      if(v===null||v===undefined) return '<span style="color:#d1d5db;">—</span>';
+      return v.toFixed(kpi.fmt);
+    }
+
+    html += '<tr style="background:'+bg+';">' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#374151;">'+kpi.label+'</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#374151;">'+fmt(allVal)+'</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#c0392b;">'+fmt(top5Val)+'</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-weight:600;color:#e74c3c;">'+fmt(top3Val)+'</td>' +
+      '</tr>';
+  });
+
+  // Show top farms used
+  html += '</tbody></table>';
+  html += '<div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:6px;font-size:11px;color:#6b7280;">';
+  html += '<strong>Top 5:</strong> '+top5farms.map(function(f){return nombreGranja(f);}).join(', ')+'<br>';
+  html += '<strong>Top 3:</strong> '+top3farms.map(function(f){return nombreGranja(f);}).join(', ');
+  html += '<br><em>Promedios ponderados por Stock medio de madres activas.</em></div>';
+
+  cont.innerHTML = html;
+  cont._topKpis = TOP_KPIS;
+  cont._farms = {all:farms, top5:top5farms, top3:top3farms};
+  cont._helpers = {gv2:gv2, gp2:gp2, gm2:gm2, gseg2:gseg2, wavg:wavg, getStock:getStock};
+}
+
+function exportTopTN() {
+  var cont = document.getElementById('topTNContent');
+  if (!cont || !cont._topKpis) { toast('Genera el reporte primero'); return; }
+  var kpis = cont._topKpis;
+  var farms = cont._farms;
+  var h = cont._helpers;
+
+  var header = ['Característica','Todas las Granjas','Top 5 granjas','Top 3 granjas'];
+  var rows = [header];
+
+  kpis.forEach(function(kpi) {
+    var allVal  = h.wavg(farms.all,  kpi.get);
+    var top5Val = h.wavg(farms.top5, kpi.get);
+    var top3Val = h.wavg(farms.top3, kpi.get);
+    function fmt(v){return v!==null?parseFloat(v.toFixed(kpi.fmt)):'';}
+    rows.push([kpi.label, fmt(allVal), fmt(top5Val), fmt(top3Val)]);
+  });
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  // Style header row width
+  ws['!cols'] = [{wch:40},{wch:18},{wch:15},{wch:15}];
+  XLSX.utils.book_append_sheet(wb, ws, 'TOP TN');
+  XLSX.writeFile(wb, 'TOP_TN_Cercafe.xlsx');
+  toast('✅ Exportado TOP_TN_Cercafe.xlsx');
+}
+
 function finalizeLoad() {
+  // Show TOP TN tab only in admin mode
+  var topBtn = document.getElementById('modeTopBtn');
+  if (topBtn && !document.body.classList.contains('modo-asociado')) {
+    topBtn.style.display = 'inline-block';
+  }
   var names = Object.keys(allFarms);
   if (!names.length) return;
 
@@ -3541,8 +3712,11 @@ document.addEventListener('click', function(e) {
 function setMode(m) {
   document.getElementById('modeInd').style.display = m==='ind'?'block':'none';
   document.getElementById('modeBm').style.display  = m==='bm'?'block':'none';
+  document.getElementById('modeTop').style.display = m==='top'?'block':'none';
   document.getElementById('modeIndBtn').className  = 'mbtn' + (m==='ind'?' on':'');
   document.getElementById('modeBmBtn').className   = 'mbtn' + (m==='bm'?' on':'');
+  document.getElementById('modeTopBtn').className  = 'mbtn' + (m==='top'?' on':'');
+  if (m==='top') renderTopTN();
   if (m==='bm') renderBM();
 }
 
