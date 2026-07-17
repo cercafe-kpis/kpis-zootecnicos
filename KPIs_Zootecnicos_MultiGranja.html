@@ -764,15 +764,24 @@ function parseWb(wb) {
     'Kg/Destetados/Hembra/Año'
   ];
   if (!rd['Reproductivo']) rd['Reproductivo'] = [];
+  if (!rd['Mortalidad de hembras']) rd['Mortalidad de hembras'] = [];
+  var inMortHembras = false;
   for (var rp = 14; rp < 70; rp++) {
     var ap = String(cv(ws,rp,0) || '').trim();
     var bp = cv(ws,rp,1), cp = cv(ws,rp,2);
+    // Track Mortalidad de hembras section
+    if (ap === 'Mortalidad de hembras') { inMortHembras = true; continue; }
+    if (inMortHembras && ap === 'Índices complementarios') { inMortHembras = false; }
+    if (inMortHembras && ap) {
+      var vMort = pn(bp);
+      if (vMort !== null) {
+        var alreadyM = rd['Mortalidad de hembras'].some(function(x){ return x.name === ap; });
+        if (!alreadyM) rd['Mortalidad de hembras'].push({name: ap, value: vMort, pct: null, med: null});
+      }
+    }
     if (PRE_VARS.indexOf(ap) >= 0) {
       var vp = pn(bp), pp = pn(cp);
-      // For Repeticion de celo: value=col B (cantidad), pct=col C (%)
-      // For DNP, Stock medio, D-S: value=col B
       if (vp !== null || pp !== null) {
-        // avoid duplicates
         var already = rd['Reproductivo'].some(function(x){ return x.name === ap; });
         if (!already) rd['Reproductivo'].push({name: ap, value: vp, pct: pp, med: null});
       }
@@ -780,7 +789,7 @@ function parseWb(wb) {
   }
 
   for (var r = 14; r <= rng.e.r; r++) {
-    var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2);
+    var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2), dCol = cv(ws,r,3);
     if (a == null) continue;
     var ns = String(a).trim();
     // Detectar cambio de segmento principal
@@ -809,7 +818,8 @@ function parseWb(wb) {
       else if (matSub === 'Destetados') varName = 'Peso al destete (Kg)';
       else varName = 'Peso (Kg)_' + matSub;  // cualquier otro contexto
     }
-    rd[cur].push({name: varName, value: val, pct: pct, med: med});
+    var medD = pn(dCol);
+    rd[cur].push({name: varName, value: val, pct: pct, med: medD !== null ? medD : med});
   }
 
   var av = [];
@@ -1596,15 +1606,24 @@ function parseWb(wb) {
     'Kg/Destetados/Hembra/Año'
   ];
   if (!rd['Reproductivo']) rd['Reproductivo'] = [];
+  if (!rd['Mortalidad de hembras']) rd['Mortalidad de hembras'] = [];
+  var inMortHembras = false;
   for (var rp = 14; rp < 70; rp++) {
     var ap = String(cv(ws,rp,0) || '').trim();
     var bp = cv(ws,rp,1), cp = cv(ws,rp,2);
+    // Track Mortalidad de hembras section
+    if (ap === 'Mortalidad de hembras') { inMortHembras = true; continue; }
+    if (inMortHembras && ap === 'Índices complementarios') { inMortHembras = false; }
+    if (inMortHembras && ap) {
+      var vMort = pn(bp);
+      if (vMort !== null) {
+        var alreadyM = rd['Mortalidad de hembras'].some(function(x){ return x.name === ap; });
+        if (!alreadyM) rd['Mortalidad de hembras'].push({name: ap, value: vMort, pct: null, med: null});
+      }
+    }
     if (PRE_VARS.indexOf(ap) >= 0) {
       var vp = pn(bp), pp = pn(cp);
-      // For Repeticion de celo: value=col B (cantidad), pct=col C (%)
-      // For DNP, Stock medio, D-S: value=col B
       if (vp !== null || pp !== null) {
-        // avoid duplicates
         var already = rd['Reproductivo'].some(function(x){ return x.name === ap; });
         if (!already) rd['Reproductivo'].push({name: ap, value: vp, pct: pp, med: null});
       }
@@ -1612,7 +1631,7 @@ function parseWb(wb) {
   }
 
   for (var r = 14; r <= rng.e.r; r++) {
-    var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2);
+    var a = cv(ws,r,0), b = cv(ws,r,1), c = cv(ws,r,2), dCol = cv(ws,r,3);
     if (a == null) continue;
     var ns = String(a).trim();
     // Detectar cambio de segmento principal
@@ -1641,7 +1660,8 @@ function parseWb(wb) {
       else if (matSub === 'Destetados') varName = 'Peso al destete (Kg)';
       else varName = 'Peso (Kg)_' + matSub;  // cualquier otro contexto
     }
-    rd[cur].push({name: varName, value: val, pct: pct, med: med});
+    var medD = pn(dCol);
+    rd[cur].push({name: varName, value: val, pct: pct, med: medD !== null ? medD : med});
   }
 
   var av = [];
