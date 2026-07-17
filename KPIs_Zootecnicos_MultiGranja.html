@@ -275,6 +275,14 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <input type="file" id="fileInput" accept=".xlsx,.xls" multiple style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
       <div class="smsg" id="sm">Ningún archivo cargado</div>
     </div>
+    <div style="margin-top:16px;padding:16px;background:#f0f4ff;border:1px solid #c7d9f5;border-radius:8px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:700;color:#1060a8;font-size:13px;">☁️ Cargar datos desde SharePoint</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:2px;">Lee automáticamente los datos ya publicados de todos los asociados sin necesidad de subir Excel.</div>
+      </div>
+      <button id="btnLoadSP" onclick="cargarDesdeSharePoint()" style="margin-left:auto;background:#1060a8;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">☁️ Cargar desde SharePoint</button>
+    </div>
+    <div id="spLoadLog" style="display:none;margin-top:10px;font-size:11px;color:#6b7280;max-height:100px;overflow-y:auto;padding:8px;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb;"></div>
   </div>
 </div>
 </div>
@@ -2820,6 +2828,88 @@ function cargarDataEnApp(data, asocName) {
   toast('Datos de ' + asocName + ' cargados correctamente');
 }
 
+// ── Cargar consolidado desde SharePoint (vista admin) ────────
+async function cargarDesdeSharePoint() {
+  var btn = document.getElementById('btnLoadSP');
+  var log = document.getElementById('spLoadLog');
+  log.style.display = 'block';
+  log.innerHTML = '';
+
+  function logSP(msg, color) {
+    var line = document.createElement('div');
+    line.style.color = color || '#374151';
+    line.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // Login if needed
+  if (!spToken) {
+    logSP('Iniciando sesión con Microsoft...', '#0078d4');
+    sessionStorage.setItem('spPendingAdminLoad', '1');
+    await spLogin();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Cargando...';
+  logSP('Conectando con SharePoint...', '#0078d4');
+
+  var loaded = 0;
+  var errors = [];
+
+  for (var asocName in ASOCIADOS) {
+    var info = ASOCIADOS[asocName];
+    logSP('Leyendo ' + asocName + '...', '#374151');
+    try {
+      var siteId  = await spGetSiteId2(info.sp);
+      var driveId = await spGetDriveId(siteId);
+      var url = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
+        '/root:/KPIs%20Zootecnicos/kpis_data.json:/content';
+      var r = await spCall(url);
+      if (!r.ok) { errors.push(asocName + ' (sin datos)'); continue; }
+      var data = await r.json();
+      // Load farms from this asociado's JSON
+      if (data.farms) {
+        Object.keys(data.farms).forEach(function(fname) {
+          var fd = data.farms[fname];
+          allFarms[fname] = {
+            rawData:     fd.rawData || {},
+            allVars:     fd.allVars || [],
+            criticos:    fd.criticos || [],
+            kpis:        fd.kpis || [],
+            periodo:     fd.periodo || '',
+            diasPeriodo: fd.diasPeriodo || 365,
+            asociado:    fd.asociado || asocName,
+            sp:          info.sp
+          };
+          loaded++;
+        });
+        // Also load globalBM from first asociado that has it
+        if (data.globalBM && !window._globalBMData) {
+          window._globalBMData = data.globalBM;
+        }
+        logSP('✅ ' + asocName + ' — ' + Object.keys(data.farms).length + ' granjas', '#15803d');
+      }
+    } catch(e) {
+      errors.push(asocName + ': ' + e.message);
+      logSP('❌ ' + asocName + ': ' + e.message, '#dc2626');
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '☁️ Cargar desde SharePoint';
+
+  if (loaded > 0) {
+    logSP('✅ ' + loaded + ' granjas cargadas' + (errors.length ? ' (' + errors.length + ' con error)' : ''), '#15803d');
+    finalizeLoad();
+    // Show toast
+    toast('✅ ' + loaded + ' granjas cargadas desde SharePoint');
+  } else {
+    logSP('No se pudieron cargar datos. ¿Ya publicaste los datos?', '#dc2626');
+  }
+}
+
 // ── Listen for token message from sp_callback.html ───────────
 window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SP_AUTH_CODE' && e.data.code) {
@@ -2831,6 +2921,11 @@ window.addEventListener('message', function(e) {
         sessionStorage.removeItem('spPendingAsoc');
         mostrarMsgAsociado('Sesion iniciada. Cargando datos de ' + pending + '...', '#0078d4');
         cargarDatosAsociado(pending);
+      }
+      var pendingAdmin = sessionStorage.getItem('spPendingAdminLoad');
+      if (pendingAdmin) {
+        sessionStorage.removeItem('spPendingAdminLoad');
+        cargarDesdeSharePoint();
       }
     });
   } else if (e.data && e.data.type === 'SP_AUTH_ERROR') {
