@@ -882,16 +882,13 @@ function renderTopTN() {
     {label:'Servicio hasta 7 días, %',       get: function(f){ return gp2(f,'Servicio hasta 7 días'); },        fmt:1, hi:true,  ponder:true},
     {label:'Tasa de parición, %',            get: function(f){ return gp2(f,'Tasa de parición'); },             fmt:1, hi:true,  ponder:true},
     {label:'Nacimientos, Total, Media',      get: function(f){
+      var av = allFarms[f] ? allFarms[f].allVars : [];
+      var v = av.find(function(x){return x.name==='Promedio nacidos totales/camada';});
+      if (v && v.value!=null) return v.value;
       var rd = allFarms[f] ? allFarms[f].rawData : {};
       if (rd && rd['Maternidad']) {
-        // Find 'Total' after 'Nacimientos' subsection
-        var inNac=false;
-        for(var i=0;i<rd['Maternidad'].length;i++){
-          var x=rd['Maternidad'][i];
-          if(x.name==='Nacimientos'){inNac=true;continue;}
-          if(inNac&&(x.name==='Total'||x.name==='Total nacidos (cantidad)')&&x.med!=null) return x.med;
-          if(inNac&&x.name==='Peso (Kg)') break; // end of nacimientos
-        }
+        var found = rd['Maternidad'].find(function(x){return x.name==='Promedio nacidos totales/camada';});
+        if (found && found.value!=null) return found.value;
       }
       return null;
     }, fmt:2, hi:true, ponder:true},
