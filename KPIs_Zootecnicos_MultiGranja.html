@@ -1262,6 +1262,10 @@ function finalizeLoad() {
   if (!activeFarm || !allFarms[activeFarm]) activeFarm = names[0];
   sel.value = activeFarm;
   selectFarm(activeFarm);
+  // Mantener el benchmarking sincronizado con los datos recien cargados
+  // (nuevo periodo, nuevas granjas, etc.), sin esperar a que el usuario
+  // toque un filtro o el selector de KPI manualmente.
+  if (typeof renderBM === 'function') renderBM();
   toast(names.length + ' granja(s) cargadas correctamente');
 }
 
@@ -1908,6 +1912,10 @@ function finalizeLoad() {
   if (!activeFarm || !allFarms[activeFarm]) activeFarm = names[0];
   sel.value = activeFarm;
   selectFarm(activeFarm);
+  // Mantener el benchmarking sincronizado con los datos recien cargados
+  // (nuevo periodo, nuevas granjas, etc.), sin esperar a que el usuario
+  // toque un filtro o el selector de KPI manualmente.
+  if (typeof renderBM === 'function') renderBM();
   toast(names.length + ' granja(s) cargadas correctamente');
 }
 
