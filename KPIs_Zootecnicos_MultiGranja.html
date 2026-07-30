@@ -2400,6 +2400,12 @@ function renderBM() {
 
   // Chart
   if (bmChart) { bmChart.destroy(); bmChart = null; }
+  // Defensa extra: si por cualquier razón queda una instancia de Chart.js
+  // huérfana atada al mismo canvas (p. ej. un frame de animación que no
+  // terminó de destruirse), la eliminamos también antes de crear la nueva.
+  // Esto evita el efecto de "se queda un paso atrás" al cambiar de KPI rápido.
+  var _orphanChart = (typeof Chart.getChart === 'function') ? Chart.getChart(document.getElementById('bmChart')) : null;
+  if (_orphanChart) { _orphanChart.destroy(); }
   // Adjust canvas height based on number of farms (38px per bar, min 300)
   var chartWrap = document.getElementById('bmChart').parentElement;
   chartWrap.style.height = '420px';
