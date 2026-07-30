@@ -2349,11 +2349,6 @@ function renderBM() {
   var globalData = window._globalBMData || {};
   var isAsocMode = document.body.classList.contains('modo-asociado') && Object.keys(globalData).length > 0;
 
-  var totalFarms = isAsocMode
-    ? (Object.values(globalData)[0] || []).length
-    : myFarms.length;
-
-  document.getElementById('bmFarmCount').textContent = totalFarms + (isAsocMode ? ' (red completa)' : '');
   if (myFarms.length < 1) { bmEmpty.style.display='block'; bmContent.style.display='none'; return; }
   bmEmpty.style.display = 'none'; bmContent.style.display = 'block';
 
@@ -2387,6 +2382,10 @@ function renderBM() {
       rows.push({farm:f, nombre:nombreGranja(f), val:val, col:col, peso:peso, isMine:true, asociado:'', destete: DESTETE_MAP[f] || ''});
     });
   }
+
+  // Contador de granjas: refleja el KPI y los filtros (Destete/Tamaño) activos
+  document.getElementById('bmFarmCount').textContent = rows.length + (isAsocMode ? ' (red completa)' : '');
+
   if (bm) rows.sort(function(a,b){ return bm.hi ? b.val-a.val : a.val-b.val; });
 
   // Summary cards — promedio ponderado por stock de madres activas
