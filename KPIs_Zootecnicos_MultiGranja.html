@@ -523,6 +523,16 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
 
       </div>
 
+      <div id="semenFiltros" style="display:none;margin-bottom:12px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:600;color:#374151;">🔽 Filtrar granjas (quita las que ya no estén activas):</span>
+          <button onclick="seleccionarTodasSemen(true)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #7b1010;background:#7b1010;color:#fff;cursor:pointer;">Todas</button>
+          <button onclick="seleccionarTodasSemen(false)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;">Ninguna</button>
+          <span style="font-size:11px;color:#9ca3af;" id="semenFiltroCount"></span>
+        </div>
+        <div id="semenCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+      </div>
+
       <div id="semenContent">
         <div class="empty"><div class="ei">🧬</div><p>Carga los archivos de al menos un período para ver la tasa de fertilidad</p></div>
       </div>
@@ -610,6 +620,7 @@ var semenPeriods = {
   p1: { label: 'Ene - Jun 2025', farms: {}, fechaFinRep: null },
   p2: { label: 'Ene - Jun 2026', farms: {}, fechaFinRep: null }
 };
+var _semenSelectedFarms = null; // null = todas seleccionadas
 
 // Parsea una fecha en formato DD/MM/YYYY (como viene en la columna "Fecha"
 // de los archivos de repeticiones) a un objeto Date.
@@ -882,6 +893,39 @@ function calcTasaFertilidad(fe) {
   return (fe.servicios - fe.repCiclicas) / fe.servicios * 100;
 }
 
+function seleccionarTodasSemen(selectAll) {
+  var cbs = document.querySelectorAll('.semen-cb');
+  cbs.forEach(function(cb) { cb.checked = selectAll; });
+  actualizarFiltroSemen();
+}
+
+function actualizarFiltroSemen() {
+  var cbs = document.querySelectorAll('.semen-cb');
+  var selected = [];
+  cbs.forEach(function(cb) { if (cb.checked) selected.push(cb.value); });
+  _semenSelectedFarms = selected;
+  renderSemen();
+}
+
+function buildSemenFilter(granjasTotales) {
+  var wrap = document.getElementById('semenCheckboxes');
+  var filtros = document.getElementById('semenFiltros');
+  if (!wrap || !filtros) return;
+  filtros.style.display = 'block';
+
+  if (!_semenSelectedFarms) _semenSelectedFarms = granjasTotales.slice();
+
+  wrap.innerHTML = granjasTotales.map(function(g) {
+    var checked = _semenSelectedFarms.indexOf(g) >= 0 ? 'checked' : '';
+    return '<label style="display:flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:4px;cursor:pointer;">' +
+      '<input type="checkbox" class="semen-cb" value="' + g + '" ' + checked + ' onchange="actualizarFiltroSemen()"> ' +
+      nombreGranja(g) + '</label>';
+  }).join('');
+
+  var count = document.getElementById('semenFiltroCount');
+  if (count) count.textContent = _semenSelectedFarms.length + ' de ' + granjasTotales.length + ' granjas seleccionadas';
+}
+
 function renderSemen() {
   var cont = document.getElementById('semenContent');
   document.getElementById('semenP1Label').textContent = '📅 Período 1 — ' + semenPeriods.p1.label;
@@ -890,10 +934,19 @@ function renderSemen() {
   var keys = {};
   Object.keys(semenPeriods.p1.farms).forEach(function(k) { keys[k] = 1; });
   Object.keys(semenPeriods.p2.farms).forEach(function(k) { keys[k] = 1; });
-  var granjas = Object.keys(keys).sort();
+  var granjasTotales = Object.keys(keys).sort();
+
+  if (!granjasTotales.length) {
+    document.getElementById('semenFiltros').style.display = 'none';
+    cont.innerHTML = '<div class="empty"><div class="ei">🧬</div><p>Carga los archivos de al menos un período para ver la tasa de fertilidad</p></div>';
+    return;
+  }
+
+  buildSemenFilter(granjasTotales);
+  var granjas = granjasTotales.filter(function(g) { return _semenSelectedFarms.indexOf(g) >= 0; });
 
   if (!granjas.length) {
-    cont.innerHTML = '<div class="empty"><div class="ei">🧬</div><p>Carga los archivos de al menos un período para ver la tasa de fertilidad</p></div>';
+    cont.innerHTML = '<div class="empty"><div class="ei">🧬</div><p>No hay granjas seleccionadas en el filtro de arriba</p></div>';
     return;
   }
 
