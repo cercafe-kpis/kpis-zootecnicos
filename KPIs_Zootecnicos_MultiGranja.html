@@ -500,16 +500,22 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
         <div style="flex:1;min-width:280px;padding:14px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fa;">
           <div style="font-weight:600;font-size:13px;margin-bottom:8px;" id="semenP1Label">📅 Período 1 — Ene-Jun 2025</div>
-          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Sube aquí tanto los Excel S4 principales (para Servicios / I.A.) como los Excel de repeticiones de este período. Se detectan automáticamente por su contenido.</div>
-          <input type="file" id="semenFileP1" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p1')">
-          <button class="btn sec" onclick="document.getElementById('semenFileP1').click()">📁 Cargar archivos período 1</button>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Si ya tienes este período cargado en el dashboard (subido o traído de SharePoint), usa el primer botón para tomar los Servicios (I.A.) de ahí sin volver a subir nada. Solo necesitas subir el Excel de repeticiones.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn sec" onclick="importarServiciosDesdeAllFarms('p1')">📥 Usar Servicios del dashboard cargado</button>
+            <input type="file" id="semenFileP1" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p1')">
+            <button class="btn sec" onclick="document.getElementById('semenFileP1').click()">📁 Cargar archivos período 1</button>
+          </div>
           <div id="semenLogP1" style="margin-top:8px;font-size:11px;max-height:120px;overflow:auto;"></div>
         </div>
         <div style="flex:1;min-width:280px;padding:14px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fa;">
           <div style="font-weight:600;font-size:13px;margin-bottom:8px;" id="semenP2Label">📅 Período 2 — Ene-Jun 2026</div>
-          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Sube aquí tanto los Excel S4 principales (para Servicios / I.A.) como los Excel de repeticiones de este período. Se detectan automáticamente por su contenido.</div>
-          <input type="file" id="semenFileP2" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p2')">
-          <button class="btn sec" onclick="document.getElementById('semenFileP2').click()">📁 Cargar archivos período 2</button>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Si ya tienes este período cargado en el dashboard (subido o traído de SharePoint), usa el primer botón para tomar los Servicios (I.A.) de ahí sin volver a subir nada. Solo necesitas subir el Excel de repeticiones.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn sec" onclick="importarServiciosDesdeAllFarms('p2')">📥 Usar Servicios del dashboard cargado</button>
+            <input type="file" id="semenFileP2" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p2')">
+            <button class="btn sec" onclick="document.getElementById('semenFileP2').click()">📁 Cargar archivos período 2</button>
+          </div>
           <div id="semenLogP2" style="margin-top:8px;font-size:11px;max-height:120px;overflow:auto;"></div>
         </div>
       </div>
@@ -624,6 +630,38 @@ function ensureSemenFarm(periodKey, key) {
     semenPeriods[periodKey].farms[key] = { servicios: null, repCiclicas: null, repTotal: null };
   }
   return semenPeriods[periodKey].farms[key];
+}
+
+// Toma el valor de Servicios (I.A.) directamente de los datos YA cargados
+// en el dashboard (allFarms) — sin necesidad de volver a subir el Excel S4.
+// Requiere que el período correspondiente esté cargado en el dashboard en
+// ese momento (subido por el admin o traído de SharePoint).
+function importarServiciosDesdeAllFarms(periodKey) {
+  var farmKeys = Object.keys(allFarms || {});
+  if (!farmKeys.length) {
+    toast('⚠️ No hay granjas cargadas en el dashboard en este momento');
+    return;
+  }
+  var count = 0, sinIA = [];
+  farmKeys.forEach(function(f) {
+    var av = allFarms[f] ? allFarms[f].allVars : [];
+    var varIA = av.find(function(x) { return x.name === 'I.A.'; });
+    var servicios = varIA ? varIA.value : null;
+    var granjaKey = resolveGranjaKey(f);
+    if (servicios !== null && servicios !== undefined) {
+      var fe = ensureSemenFarm(periodKey, granjaKey);
+      fe.servicios = servicios;
+      count++;
+      logSemen(periodKey, '✅ ' + granjaKey + ' — Servicios (I.A.) desde dashboard: ' + servicios, '#15803d');
+    } else {
+      sinIA.push(granjaKey);
+    }
+  });
+  if (sinIA.length) {
+    logSemen(periodKey, '⚠️ Sin dato "I.A." en el dashboard: ' + sinIA.join(', '), '#d97706');
+  }
+  renderSemen();
+  toast('✅ Servicios importados para ' + count + ' granja(s) desde el dashboard');
 }
 
 function logSemen(periodKey, msg, color) {
