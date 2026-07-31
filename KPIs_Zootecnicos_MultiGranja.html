@@ -537,6 +537,15 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <div id="semenContent">
         <div class="empty"><div class="ei">🧬</div><p>Carga los archivos de al menos un período para ver la tasa de fertilidad</p></div>
       </div>
+
+      <div id="kpiAdicionalesWrap" style="display:none;margin-top:32px;">
+        <div style="padding-top:24px;border-top:2px solid #dde1e7;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:700;color:#1a1a2e;">📈 Otras comparaciones — Ene-Jun 2025 vs Ene-Jun 2026</h2>
+          <p style="font-size:12px;color:#6b7280;margin-top:4px;">Se llenan automáticamente con los mismos botones de arriba ("Buscar Servicios automáticamente" / "Usar Servicios del dashboard cargado"), tomando estos valores del mismo Excel S4.</p>
+        </div>
+        <div id="kpiNacTotContent" style="margin-bottom:32px;"></div>
+        <div id="kpiTparContent"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -715,6 +724,10 @@ async function buscarServiciosPorFecha(periodKey) {
           if (varIA && varIA.value !== null && varIA.value !== undefined) {
             var fe = ensureSemenFarm(periodKey, granjaKey);
             fe.servicios = varIA.value;
+            var otros = extraerOtrosKPIs(av);
+            fe.nacTot = otros.nacTot;
+            fe.tpar = otros.tpar;
+            fe.stockMadres = otros.stockMadres;
             count++;
             logSemen(periodKey, '✅ ' + granjaKey + ' — Servicios (I.A.): ' + varIA.value, '#15803d');
           } else {
@@ -735,6 +748,7 @@ async function buscarServiciosPorFecha(periodKey) {
   }
   semenPeriods[periodKey].fechaCorteServicios = fechaObjetivo;
   renderSemen();
+  renderKPIsAdicionales();
   toast('✅ Servicios importados para ' + count + ' granja(s) — corte ' + fmtFechaDDMMYYYY(fechaObjetivo));
 }
 
@@ -784,6 +798,10 @@ function importarServiciosDesdeAllFarms(periodKey) {
     if (servicios !== null && servicios !== undefined) {
       var fe = ensureSemenFarm(periodKey, granjaKey);
       fe.servicios = servicios;
+      var otros = extraerOtrosKPIs(av);
+      fe.nacTot = otros.nacTot;
+      fe.tpar = otros.tpar;
+      fe.stockMadres = otros.stockMadres;
       count++;
       logSemen(periodKey, '✅ ' + granjaKey + ' — Servicios (I.A.) desde dashboard: ' + servicios, '#15803d');
     } else {
@@ -798,6 +816,7 @@ function importarServiciosDesdeAllFarms(periodKey) {
     semenPeriods[periodKey].fechaCorteServicios = corteDashboard;
   }
   renderSemen();
+  renderKPIsAdicionales();
   toast('✅ Servicios importados para ' + count + ' granja(s) desde el dashboard');
 }
 
@@ -913,6 +932,7 @@ function actualizarFiltroSemen() {
   cbs.forEach(function(cb) { if (cb.checked) selected.push(cb.value); });
   _semenSelectedFarms = selected;
   renderSemen();
+  renderKPIsAdicionales();
 }
 
 function buildSemenFilter(granjasTotales) {
@@ -1024,58 +1044,10 @@ function renderSemen() {
 
   cont.innerHTML = html;
 
-  if (window._semenChart) { window._semenChart.destroy(); window._semenChart = null; }
-  var orphan = (typeof Chart.getChart === 'function') ? Chart.getChart(document.getElementById('semenChart')) : null;
-  if (orphan) orphan.destroy();
-
-  var allTasas = [];
-  rows.forEach(function(r) { if (r.t1 !== null) allTasas.push(r.t1); if (r.t2 !== null) allTasas.push(r.t2); });
-  var minTasa = allTasas.length ? Math.min.apply(null, allTasas) : 0;
-  // Empezar el eje Y varios puntos por debajo del valor mínimo (redondeado),
-  // sin pasar de 70, para que la variación entre granjas se vea claramente
-  // en vez de aplastarse contra el 0%.
-  var yMin = Math.max(0, Math.floor(minTasa / 10) * 10);
-
-  window._semenChart = new Chart(document.getElementById('semenChart'), {
-    type: 'bar',
-    data: {
-      labels: rows.map(function(r) { return r.nombre; }),
-      datasets: [
-        { label: semenPeriods.p1.label, data: rows.map(function(r) { return r.t1; }), backgroundColor: '#93c5b8' },
-        { label: semenPeriods.p2.label, data: rows.map(function(r) { return r.t2; }), backgroundColor: '#1a7a4a' }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'top' } },
-      scales: {
-        y: { title: { display: true, text: 'Tasa de fertilidad (%)' }, min: yMin }
-      },
-      layout: { padding: { top: 30 } },
-      animation: {
-        onComplete: function() {
-          var chart = this;
-          var ctx2 = chart.ctx;
-          ctx2.font = 'bold 12px Segoe UI';
-          ctx2.fillStyle = '#374151';
-          chart.data.datasets.forEach(function(ds, dsIdx) {
-            var meta = chart.getDatasetMeta(dsIdx);
-            meta.data.forEach(function(bar, i) {
-              var val = ds.data[i];
-              if (val === null || val === undefined) return;
-              ctx2.save();
-              ctx2.translate(bar.x, bar.y - 6);
-              ctx2.rotate(-Math.PI / 2);
-              ctx2.textAlign = 'left';
-              ctx2.textBaseline = 'middle';
-              ctx2.fillText(val.toFixed(1) + '%', 0, 0);
-              ctx2.restore();
-            });
-          });
-        }
-      }
-    }
-  });
+  crearGraficoBarras('semenChart', rows.map(function(r) { return r.nombre; }), [
+    { label: semenPeriods.p1.label, data: rows.map(function(r) { return r.t1; }), backgroundColor: '#93c5b8' },
+    { label: semenPeriods.p2.label, data: rows.map(function(r) { return r.t2; }), backgroundColor: '#1a7a4a' }
+  ], 'Tasa de fertilidad (%)', '%');
 }
 
 function exportSemenImage() {
@@ -1129,6 +1101,169 @@ function exportSemen() {
   XLSX.writeFile(wb, 'Analisis_Semen_Cercafe.xlsx');
   toast('✅ Exportado Analisis_Semen_Cercafe.xlsx');
 }
+// Construye un gráfico de barras agrupadas (P1 vs P2) con las mismas
+// correcciones visuales para todos los gráficos de Análisis semen:
+// - devicePixelRatio alto para que no se vea borroso al exportar como imagen.
+// - Espacio (padding arriba + margen del eje Y) para que las etiquetas no
+//   choquen con la leyenda.
+// - Etiquetas de valor verticales sobre cada barra.
+function crearGraficoBarras(canvasId, labels, datasets, yAxisLabel, sufijo) {
+  var canvasEl = document.getElementById(canvasId);
+  if (!canvasEl) return null;
+
+  var prev = window['_chart_' + canvasId];
+  if (prev) { prev.destroy(); }
+  var orphan = (typeof Chart.getChart === 'function') ? Chart.getChart(canvasEl) : null;
+  if (orphan) orphan.destroy();
+
+  var allVals = [];
+  datasets.forEach(function(ds) { ds.data.forEach(function(v) { if (v !== null && v !== undefined) allVals.push(v); }); });
+  var minVal = allVals.length ? Math.min.apply(null, allVals) : 0;
+  var maxVal = allVals.length ? Math.max.apply(null, allVals) : 10;
+  var yMin = Math.max(0, Math.floor(minVal / 10) * 10);
+  var buffer = Math.max(3, (maxVal - yMin) * 0.12);
+  var yMax = Math.ceil(maxVal + buffer);
+
+  var chart = new Chart(canvasEl, {
+    type: 'bar',
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true,
+      devicePixelRatio: 2, // resolución alta para que no se vea borroso al exportar
+      layout: { padding: { top: 26 } },
+      plugins: { legend: { position: 'top', labels: { padding: 18, font: { size: 12 } } } },
+      scales: {
+        y: { title: { display: true, text: yAxisLabel }, min: yMin, max: yMax }
+      },
+      animation: {
+        onComplete: function() {
+          var chartRef = this;
+          var ctx2 = chartRef.ctx;
+          ctx2.font = 'bold 12px Segoe UI';
+          ctx2.fillStyle = '#374151';
+          chartRef.data.datasets.forEach(function(ds, dsIdx) {
+            var meta = chartRef.getDatasetMeta(dsIdx);
+            meta.data.forEach(function(bar, i) {
+              var val = ds.data[i];
+              if (val === null || val === undefined) return;
+              ctx2.save();
+              ctx2.translate(bar.x, bar.y - 6);
+              ctx2.rotate(-Math.PI / 2);
+              ctx2.textAlign = 'left';
+              ctx2.textBaseline = 'middle';
+              ctx2.fillText(val.toFixed(1) + (sufijo || ''), 0, 0);
+              ctx2.restore();
+            });
+          });
+        }
+      }
+    }
+  });
+  window['_chart_' + canvasId] = chart;
+  return chart;
+}
+
+// Extrae Nacidos totales/camada y Tasa de parición del mismo allVars donde
+// ya se lee "I.A." — para no tener que subir/buscar nada aparte.
+function extraerOtrosKPIs(av) {
+  var vNacTot = av.find(function(x) { return x.name === 'Promedio nacidos totales/camada'; });
+  var vTpar = av.find(function(x) { return x.name === 'Tasa de parición'; });
+  var vStock = av.find(function(x) { return x.name === 'Stock medio de madres activas'; });
+  return {
+    nacTot: (vNacTot && vNacTot.value !== null && vNacTot.value !== undefined) ? vNacTot.value : null,
+    tpar: (vTpar && vTpar.pct !== null && vTpar.pct !== undefined) ? vTpar.pct : null,
+    stockMadres: (vStock && vStock.value !== null && vStock.value !== undefined) ? vStock.value : null
+  };
+}
+
+// Renderizador genérico de tabla + gráfico para comparar un KPI simple
+// (no acumulativo, sin repeticiones) entre Período 1 y Período 2.
+function renderComparacionGenerica(containerId, chartId, campo, tituloCorto, sufijo, decimales) {
+  var cont = document.getElementById(containerId);
+  if (!cont) return;
+
+  var keys = {};
+  Object.keys(semenPeriods.p1.farms).forEach(function(k) { if (semenPeriods.p1.farms[k][campo] !== null && semenPeriods.p1.farms[k][campo] !== undefined) keys[k] = 1; });
+  Object.keys(semenPeriods.p2.farms).forEach(function(k) { if (semenPeriods.p2.farms[k][campo] !== null && semenPeriods.p2.farms[k][campo] !== undefined) keys[k] = 1; });
+  var granjasTotales = Object.keys(keys).sort();
+  if (_semenSelectedFarms) granjasTotales = granjasTotales.filter(function(g) { return _semenSelectedFarms.indexOf(g) >= 0; });
+
+  if (!granjasTotales.length) {
+    cont.innerHTML = '<div class="empty"><div class="ei">📈</div><p>Sin datos de ' + tituloCorto + ' todavía para ninguno de los dos períodos</p></div>';
+    return;
+  }
+
+  var rows = granjasTotales.map(function(g) {
+    var f1 = semenPeriods.p1.farms[g], f2 = semenPeriods.p2.farms[g];
+    var v1 = f1 ? f1[campo] : null;
+    var v2 = f2 ? f2[campo] : null;
+    // Peso = Stock medio de madres activas de ese período; si no está disponible, no pondera (peso 1)
+    var peso1 = (f1 && f1.stockMadres) ? f1.stockMadres : 1;
+    var peso2 = (f2 && f2.stockMadres) ? f2.stockMadres : 1;
+    return { nombre: nombreGranja(g), v1: (v1 === undefined ? null : v1), v2: (v2 === undefined ? null : v2), peso1: peso1, peso2: peso2 };
+  });
+
+  var fmt = function(v) { return (v === null || v === undefined) ? '—' : v.toFixed(decimales) + (sufijo || ''); };
+  function wavg(campoVal, campoPeso) {
+    var sumV = 0, sumW = 0;
+    rows.forEach(function(r) {
+      if (r[campoVal] !== null && r[campoVal] !== undefined) {
+        sumV += r[campoVal] * r[campoPeso];
+        sumW += r[campoPeso];
+      }
+    });
+    return sumW > 0 ? sumV / sumW : null;
+  }
+  var avg1 = wavg('v1', 'peso1');
+  var avg2 = wavg('v2', 'peso2');
+
+  var html = '<h3 style="font-size:15px;font-weight:700;margin-bottom:10px;">' + tituloCorto + '</h3>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">' +
+    '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📊 Cercafe ' + semenPeriods.p1.label + '</div><div class="bm-sv" style="color:#1060a8">' + fmt(avg1) + '</div><div class="bm-ss">' + rows.length + ' granjas · ponderado por madres</div></div>' +
+    '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📊 Cercafe ' + semenPeriods.p2.label + '</div><div class="bm-sv" style="color:#1060a8">' + fmt(avg2) + '</div><div class="bm-ss">' + rows.length + ' granjas · ponderado por madres</div></div>' +
+    '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📈 Variación</div><div class="bm-sv" style="color:' + ((avg1 !== null && avg2 !== null && avg2 >= avg1) ? '#15803d' : '#dc2626') + '">' + ((avg1 !== null && avg2 !== null) ? (avg2 - avg1 >= 0 ? '+' : '') + (avg2 - avg1).toFixed(decimales) + (sufijo||'') : '—') + '</div><div class="bm-ss">vs. período anterior</div></div>' +
+    '</div>';
+
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:16px;">' +
+    '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dde1e7;">' +
+    '<th style="text-align:left;padding:12px;font-size:16px;">Granja</th>' +
+    '<th style="text-align:right;padding:12px;font-size:16px;">' + semenPeriods.p1.label + '</th>' +
+    '<th style="text-align:right;padding:12px;font-size:16px;">' + semenPeriods.p2.label + '</th>' +
+    '<th style="text-align:right;padding:12px;font-size:16px;">Δ</th>' +
+    '</tr></thead><tbody>';
+
+  rows.forEach(function(row) {
+    var delta = (row.v1 !== null && row.v2 !== null) ? row.v2 - row.v1 : null;
+    var deltaColor = delta === null ? '#6b7280' : (delta >= 0 ? '#15803d' : '#dc2626');
+    html += '<tr style="border-bottom:1px solid #f0f2f5;">' +
+      '<td style="padding:11px 12px;font-weight:600;font-size:16px;">' + row.nombre + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-size:16px;">' + fmt(row.v1) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-size:16px;">' + fmt(row.v2) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;color:' + deltaColor + ';font-weight:600;font-size:16px;">' + (delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(decimales) + (sufijo||'')) + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:36px;padding-top:20px;border-top:1px solid #f0f2f5;"><canvas id="' + chartId + '" height="90"></canvas></div>';
+
+  cont.innerHTML = html;
+
+  crearGraficoBarras(chartId, rows.map(function(r) { return r.nombre; }), [
+    { label: semenPeriods.p1.label, data: rows.map(function(r) { return r.v1; }), backgroundColor: '#93c5b8' },
+    { label: semenPeriods.p2.label, data: rows.map(function(r) { return r.v2; }), backgroundColor: '#1a7a4a' }
+  ], tituloCorto, sufijo);
+}
+
+function renderKPIsAdicionales() {
+  var wrap = document.getElementById('kpiAdicionalesWrap');
+  if (!wrap) return;
+  var hayDatos = Object.keys(semenPeriods.p1.farms).some(function(k) { return semenPeriods.p1.farms[k].nacTot !== undefined || semenPeriods.p1.farms[k].tpar !== undefined; }) ||
+                 Object.keys(semenPeriods.p2.farms).some(function(k) { return semenPeriods.p2.farms[k].nacTot !== undefined || semenPeriods.p2.farms[k].tpar !== undefined; });
+  if (!hayDatos) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  renderComparacionGenerica('kpiNacTotContent', 'kpiNacTotChart', 'nacTot', 'Nacidos totales / camada', '', 2);
+  renderComparacionGenerica('kpiTparContent', 'kpiTparChart', 'tpar', 'Tasa de parición (%)', '%', 1);
+}
+
 // =================== FIN ANÁLISIS SEMEN =====================
 
 var asociadoFiltro = 'Todos';
@@ -4673,7 +4808,7 @@ function setMode(m) {
   document.getElementById('modeSemenBtn').className = 'mbtn' + (m==='semen'?' on':'');
   if (m==='top') renderTopTN();
   if (m==='bm') renderBM();
-  if (m==='semen') renderSemen();
+  if (m==='semen') { renderSemen(); renderKPIsAdicionales(); }
 }
 
 function showOv(msg) {
