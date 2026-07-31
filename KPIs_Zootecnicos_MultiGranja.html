@@ -888,9 +888,10 @@ function handleSemenFiles(fileList, periodKey) {
 }
 
 function calcTasaFertilidad(fe) {
-  if (!fe || fe.servicios === null || fe.servicios === undefined || fe.repCiclicas === null || fe.repCiclicas === undefined) return null;
+  if (!fe || fe.servicios === null || fe.servicios === undefined) return null;
   if (!fe.servicios) return null;
-  return (fe.servicios - fe.repCiclicas) / fe.servicios * 100;
+  var rep = (fe.repCiclicas === null || fe.repCiclicas === undefined) ? 0 : fe.repCiclicas;
+  return (fe.servicios - rep) / fe.servicios * 100;
 }
 
 function seleccionarTodasSemen(selectAll) {
@@ -961,8 +962,9 @@ function renderSemen() {
     var sumServ = 0, sumRep = 0, n = 0;
     granjas.forEach(function(g) {
       var fe = semenPeriods[periodKey].farms[g];
-      if (fe && fe.servicios !== null && fe.servicios !== undefined && fe.repCiclicas !== null && fe.repCiclicas !== undefined) {
-        sumServ += fe.servicios; sumRep += fe.repCiclicas; n++;
+      if (fe && fe.servicios !== null && fe.servicios !== undefined) {
+        var rep = (fe.repCiclicas === null || fe.repCiclicas === undefined) ? 0 : fe.repCiclicas;
+        sumServ += fe.servicios; sumRep += rep; n++;
       }
     });
     return { servicios: sumServ, repCiclicas: sumRep, tasa: sumServ ? (sumServ - sumRep) / sumServ * 100 : null, n: n };
@@ -971,6 +973,12 @@ function renderSemen() {
 
   var fmt = function(v, dec) { return (v === null || v === undefined) ? '—' : v.toFixed(dec === undefined ? 0 : dec); };
   var fmtPct = function(v) { return (v === null || v === undefined) ? '—' : v.toFixed(1) + '%'; };
+  // Sin archivo de repeticiones = 0 repeticiones (no significa que falte el dato),
+  // siempre que sí haya Servicios para esa granja/período.
+  var fmtRep = function(fe) {
+    if (!fe || fe.servicios === null || fe.servicios === undefined) return '—';
+    return String((fe.repCiclicas === null || fe.repCiclicas === undefined) ? 0 : fe.repCiclicas);
+  };
 
   var html = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">' +
     '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📊 Cercafe ' + semenPeriods.p1.label + '</div><div class="bm-sv" style="color:#1060a8">' + fmtPct(c1.tasa) + '</div><div class="bm-ss">' + c1.n + ' granjas · ' + fmt(c1.servicios) + ' servicios</div></div>' +
@@ -995,10 +1003,10 @@ function renderSemen() {
     html += '<tr style="border-bottom:1px solid #f0f2f5;">' +
       '<td style="padding:7px 8px;font-weight:600;">' + row.nombre + '</td>' +
       '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe1 ? row.fe1.servicios : null) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe1 ? row.fe1.repCiclicas : null) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;">' + fmtRep(row.fe1) + '</td>' +
       '<td style="text-align:right;padding:7px 8px;font-weight:600;">' + fmtPct(row.t1) + '</td>' +
       '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe2 ? row.fe2.servicios : null) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe2 ? row.fe2.repCiclicas : null) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;">' + fmtRep(row.fe2) + '</td>' +
       '<td style="text-align:right;padding:7px 8px;font-weight:600;">' + fmtPct(row.t2) + '</td>' +
       '<td style="text-align:right;padding:7px 8px;color:' + deltaColor + ';font-weight:600;">' + (delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(1)) + '</td>' +
       '</tr>';
@@ -1035,7 +1043,13 @@ function exportSemen() {
   Object.keys(semenPeriods.p1.farms).forEach(function(k) { granjas[k] = 1; });
   Object.keys(semenPeriods.p2.farms).forEach(function(k) { granjas[k] = 1; });
   var names = Object.keys(granjas).sort();
+  if (_semenSelectedFarms) names = names.filter(function(g) { return _semenSelectedFarms.indexOf(g) >= 0; });
   if (!names.length) { toast('⚠️ No hay datos para exportar'); return; }
+
+  var repOrCero = function(fe) {
+    if (!fe || fe.servicios === null || fe.servicios === undefined) return '';
+    return (fe.repCiclicas === null || fe.repCiclicas === undefined) ? 0 : fe.repCiclicas;
+  };
 
   var aoa = [['Granja',
     'Servicios ' + semenPeriods.p1.label, 'Rep. cíclicas ' + semenPeriods.p1.label, 'Tasa fertilidad ' + semenPeriods.p1.label + ' (%)',
@@ -1045,8 +1059,8 @@ function exportSemen() {
     var fe1 = semenPeriods.p1.farms[g], fe2 = semenPeriods.p2.farms[g];
     var t1 = calcTasaFertilidad(fe1), t2 = calcTasaFertilidad(fe2);
     aoa.push([nombreGranja(g),
-      fe1 ? fe1.servicios : '', fe1 ? fe1.repCiclicas : '', t1 !== null ? +t1.toFixed(2) : '',
-      fe2 ? fe2.servicios : '', fe2 ? fe2.repCiclicas : '', t2 !== null ? +t2.toFixed(2) : '',
+      fe1 ? fe1.servicios : '', repOrCero(fe1), t1 !== null ? +t1.toFixed(2) : '',
+      fe2 ? fe2.servicios : '', repOrCero(fe2), t2 !== null ? +t2.toFixed(2) : '',
       (t1 !== null && t2 !== null) ? +(t2 - t1).toFixed(2) : '']);
   });
   var ws = XLSX.utils.aoa_to_sheet(aoa);
