@@ -3395,6 +3395,41 @@ window.addEventListener('load', function() {
 var _spDriveId = null;
 var _spAsocName = null;
 
+// Extrae la fecha final (corte) codificada en el nombre del archivo, ej:
+// "kpis_data_01-01-2026_—_30-06-2026.json" -> Date(2026,5,30).
+// Devuelve null para "kpis_data.json" (no trae fecha en el nombre).
+function parseFechaFinArchivo(filename) {
+  var m = String(filename || '').match(/(\d{2})-(\d{2})-(\d{4})\.json$/);
+  if (!m) return null;
+  return new Date(+m[3], +m[2] - 1, +m[1]);
+}
+
+// Dada la lista de archivos kpis_data*.json de una carpeta, determina cuál
+// corresponde al corte más reciente REAL (comparando fechas, no el nombre
+// del archivo ni su fecha de modificación). Si ninguno trae fecha en el
+// nombre, cae de vuelta a 'kpis_data.json'.
+function elegirArchivoMasReciente(files) {
+  var mejor = null, mejorFecha = null;
+  files.forEach(function(f) {
+    var fecha = parseFechaFinArchivo(f.name);
+    if (fecha && (!mejorFecha || fecha > mejorFecha)) { mejorFecha = fecha; mejor = f.name; }
+  });
+  if (mejor) return mejor;
+  var tieneGenerico = files.some(function(f) { return f.name === 'kpis_data.json'; });
+  return tieneGenerico ? 'kpis_data.json' : (files[0] ? files[0].name : 'kpis_data.json');
+}
+
+async function listarArchivosPeriodo(driveId) {
+  var listUrl = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
+    '/root:/KPIs%20Zootecnicos:/children?$select=name,lastModifiedDateTime';
+  var r = await spCall(listUrl);
+  if (!r.ok) return [];
+  var d = await r.json();
+  return (d.value || []).filter(function(f) {
+    return f.name && f.name.startsWith('kpis_data') && f.name.endsWith('.json');
+  });
+}
+
 async function cargarDatosAsociado(asocName, filename) {
   var info = ASOCIADOS[asocName];
   if (!info) {
@@ -3421,7 +3456,14 @@ async function cargarDatosAsociado(asocName, filename) {
       _spAsocName = asocName;
     }
 
-    var targetFile = filename || 'kpis_data.json';
+    var targetFile = filename;
+    if (!targetFile) {
+      mostrarMsgAsociado('Buscando el período más reciente...', '#0078d4');
+      var archivosDisponibles = await listarArchivosPeriodo(_spDriveId);
+      targetFile = archivosDisponibles.length
+        ? elegirArchivoMasReciente(archivosDisponibles)
+        : 'kpis_data.json';
+    }
     var graphUrl = 'https://graph.microsoft.com/v1.0/drives/' + _spDriveId +
       '/root:/KPIs%20Zootecnicos/' + encodeURIComponent(targetFile) + ':/content';
 
@@ -3473,16 +3515,16 @@ async function listarPeriodosAdmin() {
     sel.innerHTML = '';
     // Override onchange for admin mode
     sel.onchange = function() { cambiarPeriodoAdmin(this.value); };
+    var archivoMasRecienteAdmin = elegirArchivoMasReciente(files);
     files.forEach(function(f) {
       var opt = document.createElement('option');
       opt.value = f.name;
-      if (f.name === 'kpis_data.json') {
-        opt.textContent = '⭐ Más reciente';
+      if (f.name === archivoMasRecienteAdmin) {
+        opt.textContent = '⭐ Más reciente' + (f.name !== 'kpis_data.json' ? ' (' + f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ') + ')' : '');
       } else {
-        var label = f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ');
-        opt.textContent = label;
+        opt.textContent = f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ');
       }
-      opt.selected = (f.name === 'kpis_data.json');
+      opt.selected = (f.name === archivoMasRecienteAdmin);
       sel.appendChild(opt);
     });
     wrap.style.display = 'flex';
@@ -3564,16 +3606,19 @@ async function listarPeriodos(asocName, currentFile) {
     var wrap = document.getElementById('periodoSelectorWrap');
     if (!sel || !wrap) return;
 
+    var archivoMasReciente = elegirArchivoMasReciente(files);
+
     sel.innerHTML = '';
     files.forEach(function(f) {
       var opt = document.createElement('option');
       opt.value = f.name;
-      // Format label: kpis_data.json -> "Más reciente", kpis_data_01-01-2026_—_30-04-2026.json -> "01-01-2026 — 30-04-2026"
-      if (f.name === 'kpis_data.json') {
-        opt.textContent = '⭐ Más reciente';
+      // Etiqueta: el archivo con la fecha de corte más reciente lleva la estrella,
+      // sin importar si su nombre es "kpis_data.json" o uno con fecha.
+      if (f.name === archivoMasReciente) {
+        var fechaFin = parseFechaFinArchivo(f.name);
+        opt.textContent = '⭐ Más reciente' + (fechaFin ? ' (' + f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ') + ')' : '');
       } else {
-        var label = f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ');
-        opt.textContent = label;
+        opt.textContent = f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ');
       }
       opt.selected = (f.name === currentFile);
       sel.appendChild(opt);
