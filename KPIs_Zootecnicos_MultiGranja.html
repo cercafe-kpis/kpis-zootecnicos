@@ -1014,7 +1014,7 @@ function renderSemen() {
   });
   html += '</tbody></table></div>';
 
-  html += '<div style="margin-top:20px;"><canvas id="semenChart" height="90"></canvas></div>';
+  html += '<div style="margin-top:36px;padding-top:20px;border-top:1px solid #f0f2f5;"><canvas id="semenChart" height="90"></canvas></div>';
 
   cont.innerHTML = html;
 
@@ -1028,7 +1028,7 @@ function renderSemen() {
   // Empezar el eje Y varios puntos por debajo del valor mínimo (redondeado),
   // sin pasar de 70, para que la variación entre granjas se vea claramente
   // en vez de aplastarse contra el 0%.
-  var yMin = Math.max(0, Math.min(70, Math.floor((minTasa - 5) / 10) * 10));
+  var yMin = Math.max(0, Math.floor(minTasa / 10) * 10);
 
   window._semenChart = new Chart(document.getElementById('semenChart'), {
     type: 'bar',
@@ -1045,24 +1045,27 @@ function renderSemen() {
       scales: {
         y: { title: { display: true, text: 'Tasa de fertilidad (%)' }, min: yMin }
       },
+      layout: { padding: { top: 30 } },
       animation: {
         onComplete: function() {
           var chart = this;
           var ctx2 = chart.ctx;
-          ctx2.save();
-          ctx2.font = 'bold 10px Segoe UI';
-          ctx2.textBaseline = 'bottom';
-          ctx2.textAlign = 'center';
+          ctx2.font = 'bold 12px Segoe UI';
+          ctx2.fillStyle = '#374151';
           chart.data.datasets.forEach(function(ds, dsIdx) {
             var meta = chart.getDatasetMeta(dsIdx);
             meta.data.forEach(function(bar, i) {
               var val = ds.data[i];
               if (val === null || val === undefined) return;
-              ctx2.fillStyle = '#374151';
-              ctx2.fillText(val.toFixed(1) + '%', bar.x, bar.y - 3);
+              ctx2.save();
+              ctx2.translate(bar.x, bar.y - 6);
+              ctx2.rotate(-Math.PI / 2);
+              ctx2.textAlign = 'left';
+              ctx2.textBaseline = 'middle';
+              ctx2.fillText(val.toFixed(1) + '%', 0, 0);
+              ctx2.restore();
             });
           });
-          ctx2.restore();
         }
       }
     }
