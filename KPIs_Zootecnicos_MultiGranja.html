@@ -487,6 +487,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <h2>🧬 Análisis semen — Tasa de fertilidad</h2>
       <div style="display:flex;gap:8px;margin-left:auto;">
         <button class="btn sec" onclick="exportSemen()">↓ Exportar Excel</button>
+        <button class="btn sec" onclick="exportSemenImage()" style="margin-left:6px;">🖼 Exportar imagen</button>
       </div>
     </div>
     <div style="padding:16px;">
@@ -986,29 +987,29 @@ function renderSemen() {
     '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📈 Variación consolidado</div><div class="bm-sv" style="color:' + ((c1.tasa !== null && c2.tasa !== null && c2.tasa >= c1.tasa) ? '#15803d' : '#dc2626') + '">' + ((c1.tasa !== null && c2.tasa !== null) ? (c2.tasa - c1.tasa >= 0 ? '+' : '') + (c2.tasa - c1.tasa).toFixed(1) + ' pts' : '—') + '</div><div class="bm-ss">vs. período anterior</div></div>' +
     '</div>';
 
-  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:16px;">' +
     '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dde1e7;">' +
-    '<th style="text-align:left;padding:8px;">Granja</th>' +
-    '<th style="text-align:right;padding:8px;" colspan="3">' + semenPeriods.p1.label + '</th>' +
-    '<th style="text-align:right;padding:8px;" colspan="3">' + semenPeriods.p2.label + '</th>' +
-    '<th style="text-align:right;padding:8px;">Δ pts</th>' +
-    '</tr><tr style="background:#f8f9fa;border-bottom:1px solid #dde1e7;color:#6b7280;font-size:11px;">' +
-    '<th></th><th style="text-align:right;padding:4px 8px;">Servicios</th><th style="text-align:right;padding:4px 8px;">Rep. cíclicas</th><th style="text-align:right;padding:4px 8px;">Tasa fertilidad</th>' +
-    '<th style="text-align:right;padding:4px 8px;">Servicios</th><th style="text-align:right;padding:4px 8px;">Rep. cíclicas</th><th style="text-align:right;padding:4px 8px;">Tasa fertilidad</th>' +
+    '<th style="text-align:left;padding:12px;font-size:16px;">Granja</th>' +
+    '<th style="text-align:right;padding:12px;font-size:16px;" colspan="3">' + semenPeriods.p1.label + '</th>' +
+    '<th style="text-align:right;padding:12px;font-size:16px;" colspan="3">' + semenPeriods.p2.label + '</th>' +
+    '<th style="text-align:right;padding:12px;font-size:16px;">Δ pts</th>' +
+    '</tr><tr style="background:#f8f9fa;border-bottom:1px solid #dde1e7;color:#6b7280;font-size:13px;">' +
+    '<th></th><th style="text-align:right;padding:6px 12px;">Servicios</th><th style="text-align:right;padding:6px 12px;">Rep. cíclicas</th><th style="text-align:right;padding:6px 12px;">Tasa fertilidad</th>' +
+    '<th style="text-align:right;padding:6px 12px;">Servicios</th><th style="text-align:right;padding:6px 12px;">Rep. cíclicas</th><th style="text-align:right;padding:6px 12px;">Tasa fertilidad</th>' +
     '<th></th></tr></thead><tbody>';
 
   rows.forEach(function(row) {
     var delta = (row.t1 !== null && row.t2 !== null) ? row.t2 - row.t1 : null;
     var deltaColor = delta === null ? '#6b7280' : (delta >= 0 ? '#15803d' : '#dc2626');
     html += '<tr style="border-bottom:1px solid #f0f2f5;">' +
-      '<td style="padding:7px 8px;font-weight:600;">' + row.nombre + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe1 ? row.fe1.servicios : null) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;">' + fmtRep(row.fe1) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;font-weight:600;">' + fmtPct(row.t1) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe2 ? row.fe2.servicios : null) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;">' + fmtRep(row.fe2) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;font-weight:600;">' + fmtPct(row.t2) + '</td>' +
-      '<td style="text-align:right;padding:7px 8px;color:' + deltaColor + ';font-weight:600;">' + (delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(1)) + '</td>' +
+      '<td style="padding:11px 12px;font-weight:600;font-size:16px;">' + row.nombre + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-size:16px;">' + fmt(row.fe1 ? row.fe1.servicios : null) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-size:16px;">' + fmtRep(row.fe1) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-weight:600;font-size:16px;">' + fmtPct(row.t1) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-size:16px;">' + fmt(row.fe2 ? row.fe2.servicios : null) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-size:16px;">' + fmtRep(row.fe2) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;font-weight:600;font-size:16px;">' + fmtPct(row.t2) + '</td>' +
+      '<td style="text-align:right;padding:11px 12px;color:' + deltaColor + ';font-weight:600;font-size:16px;">' + (delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(1)) + '</td>' +
       '</tr>';
   });
   html += '</tbody></table></div>';
@@ -1020,6 +1021,14 @@ function renderSemen() {
   if (window._semenChart) { window._semenChart.destroy(); window._semenChart = null; }
   var orphan = (typeof Chart.getChart === 'function') ? Chart.getChart(document.getElementById('semenChart')) : null;
   if (orphan) orphan.destroy();
+
+  var allTasas = [];
+  rows.forEach(function(r) { if (r.t1 !== null) allTasas.push(r.t1); if (r.t2 !== null) allTasas.push(r.t2); });
+  var minTasa = allTasas.length ? Math.min.apply(null, allTasas) : 0;
+  // Empezar el eje Y varios puntos por debajo del valor mínimo (redondeado),
+  // sin pasar de 70, para que la variación entre granjas se vea claramente
+  // en vez de aplastarse contra el 0%.
+  var yMin = Math.max(0, Math.min(70, Math.floor((minTasa - 5) / 10) * 10));
 
   window._semenChart = new Chart(document.getElementById('semenChart'), {
     type: 'bar',
@@ -1033,8 +1042,50 @@ function renderSemen() {
     options: {
       responsive: true,
       plugins: { legend: { position: 'top' } },
-      scales: { y: { title: { display: true, text: 'Tasa de fertilidad (%)' } } }
+      scales: {
+        y: { title: { display: true, text: 'Tasa de fertilidad (%)' }, min: yMin }
+      },
+      animation: {
+        onComplete: function() {
+          var chart = this;
+          var ctx2 = chart.ctx;
+          ctx2.save();
+          ctx2.font = 'bold 10px Segoe UI';
+          ctx2.textBaseline = 'bottom';
+          ctx2.textAlign = 'center';
+          chart.data.datasets.forEach(function(ds, dsIdx) {
+            var meta = chart.getDatasetMeta(dsIdx);
+            meta.data.forEach(function(bar, i) {
+              var val = ds.data[i];
+              if (val === null || val === undefined) return;
+              ctx2.fillStyle = '#374151';
+              ctx2.fillText(val.toFixed(1) + '%', bar.x, bar.y - 3);
+            });
+          });
+          ctx2.restore();
+        }
+      }
     }
+  });
+}
+
+function exportSemenImage() {
+  var el = document.getElementById('semenContent');
+  if (!el) return;
+  html2canvas(el, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    logging: false
+  }).then(function(canvas) {
+    var link = document.createElement('a');
+    link.download = 'Analisis_Semen_Cercafe.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('✅ Imagen exportada');
+  }).catch(function(e) {
+    toast('Error al exportar imagen');
+    console.error(e);
   });
 }
 
