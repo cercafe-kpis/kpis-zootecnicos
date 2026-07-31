@@ -3733,6 +3733,26 @@ async function cargarDesdeSharePoint() {
   btn.textContent = '⏳ Cargando...';
   logSP('Conectando con SharePoint...', '#0078d4');
 
+  // Determinar UNA sola vez cuál es el archivo del corte más reciente
+  // (comparando fechas reales, no nombres), y usar ESE mismo archivo para
+  // todos los asociados — así todas las granjas quedan en el mismo período.
+  var archivoObjetivo = 'kpis_data.json';
+  try {
+    var primerAsoc = Object.keys(ASOCIADOS)[0];
+    if (primerAsoc) {
+      var infoRef = ASOCIADOS[primerAsoc];
+      var siteIdRef = await spGetSiteId2(infoRef.sp);
+      var driveIdRef = await spGetDriveId(siteIdRef);
+      var archivosRef = await listarArchivosPeriodo(driveIdRef);
+      if (archivosRef.length) {
+        archivoObjetivo = elegirArchivoMasReciente(archivosRef);
+        logSP('📅 Período más reciente detectado: ' + archivoObjetivo, '#0078d4');
+      }
+    }
+  } catch (eRef) {
+    logSP('⚠️ No se pudo determinar el período más reciente, usando kpis_data.json', '#d97706');
+  }
+
   var loaded = 0;
   var errors = [];
 
@@ -3743,7 +3763,7 @@ async function cargarDesdeSharePoint() {
       var siteId  = await spGetSiteId2(info.sp);
       var driveId = await spGetDriveId(siteId);
       var url = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
-        '/root:/KPIs%20Zootecnicos/kpis_data.json:/content';
+        '/root:/KPIs%20Zootecnicos/' + encodeURIComponent(archivoObjetivo) + ':/content';
       var r = await spCall(url);
       if (!r.ok) { errors.push(asocName + ' (sin datos)'); continue; }
       var data = await r.json();
