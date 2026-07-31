@@ -693,7 +693,13 @@ async function buscarServiciosPorFecha(periodKey) {
       var driveId = await spGetDriveId(siteId);
       var archivos = await listarArchivosPeriodo(driveId);
       var archivoElegido = elegirArchivoPorFecha(archivos, fechaObjetivo);
-      if (!archivoElegido) { sinArchivo.push(asocName); continue; }
+      if (!archivoElegido) {
+        sinArchivo.push(asocName);
+        logSemen(periodKey, '⚠️ ' + asocName + ': ningún archivo tiene un corte cercano a ' + fmtFechaDDMMYYYY(fechaObjetivo) + ' (tolerancia 20 días) — no se importó nada de este asociado.', '#d97706');
+        continue;
+      }
+      var fechaArchivo = parseFechaFinArchivo(archivoElegido);
+      logSemen(periodKey, '📄 ' + asocName + ': usando "' + archivoElegido + '"' + (fechaArchivo ? ' (corte ' + fmtFechaDDMMYYYY(fechaArchivo) + ')' : ''), '#374151');
 
       var url = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
         '/root:/KPIs%20Zootecnicos/' + encodeURIComponent(archivoElegido) + ':/content';
@@ -3719,7 +3725,7 @@ function elegirArchivoMasReciente(files) {
 // coincide con una fecha específica" — usado para hacer match automático
 // contra la fecha real de un archivo de repeticiones.
 function elegirArchivoPorFecha(files, fechaObjetivo, toleranciaDias) {
-  toleranciaDias = toleranciaDias || 60;
+  toleranciaDias = toleranciaDias || 20;
   var mejor = null, mejorDiff = Infinity;
   files.forEach(function(f) {
     var fecha = parseFechaFinArchivo(f.name);
