@@ -604,9 +604,23 @@ function actualizarFechaCorte() {
 
 // ===================== ANÁLISIS SEMEN — Tasa de fertilidad =====================
 var semenPeriods = {
-  p1: { label: 'Ene - Jun 2025', farms: {} },
-  p2: { label: 'Ene - Jun 2026', farms: {} }
+  p1: { label: 'Ene - Jun 2025', farms: {}, fechaFinRep: null },
+  p2: { label: 'Ene - Jun 2026', farms: {}, fechaFinRep: null }
 };
+
+// Parsea una fecha en formato DD/MM/YYYY (como viene en la columna "Fecha"
+// de los archivos de repeticiones) a un objeto Date.
+function parseFechaDDMMYYYY(str) {
+  var m = String(str || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  return new Date(+m[3], +m[2] - 1, +m[1]);
+}
+
+function fmtFechaDDMMYYYY(d) {
+  if (!d) return '';
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+}
 
 function normalizeGranjaKey(str) {
   return String(str || '')
@@ -642,6 +656,36 @@ function importarServiciosDesdeAllFarms(periodKey) {
     toast('⚠️ No hay granjas cargadas en el dashboard en este momento');
     return;
   }
+
+  // Determinar el corte real del dashboard actualmente cargado (misma lógica
+  // que el badge "Datos con corte a"): la Fecha final más reciente entre
+  // las granjas cargadas.
+  var corteDashboard = null;
+  farmKeys.forEach(function(f) {
+    var periodo = allFarms[f].periodo || '';
+    var m = periodo.match(/(\d{2}\/\d{2}\/\d{4})\s*—\s*(\d{2}\/\d{2}\/\d{4})/);
+    if (m) {
+      var d = parseFechaDDMMYYYY(m[2]);
+      if (d && (!corteDashboard || d > corteDashboard)) corteDashboard = d;
+    }
+  });
+
+  // Si este período ya tiene un archivo de repeticiones cargado, sabemos a
+  // qué corte real corresponde (por las fechas dentro de ese archivo).
+  // Si el dashboard está en un corte distinto, NO importar — para no repetir
+  // el error de mezclar Servicios de un período con repeticiones de otro.
+  var fechaEsperada = semenPeriods[periodKey].fechaFinRep;
+  if (fechaEsperada && corteDashboard) {
+    var diffDias = Math.abs(corteDashboard - fechaEsperada) / 86400000;
+    if (diffDias > 60) {
+      logSemen(periodKey, '❌ El dashboard tiene cargado el corte ' + fmtFechaDDMMYYYY(corteDashboard) +
+        ', pero el archivo de repeticiones de este período corresponde a ' + fmtFechaDDMMYYYY(fechaEsperada) +
+        '. Cambia el dashboard al período correcto antes de importar.', '#dc2626');
+      toast('❌ El dashboard no coincide con el período de este archivo de repeticiones');
+      return;
+    }
+  }
+
   var count = 0, sinIA = [];
   farmKeys.forEach(function(f) {
     var av = allFarms[f] ? allFarms[f].allVars : [];
@@ -659,6 +703,10 @@ function importarServiciosDesdeAllFarms(periodKey) {
   });
   if (sinIA.length) {
     logSemen(periodKey, '⚠️ Sin dato "I.A." en el dashboard: ' + sinIA.join(', '), '#d97706');
+  }
+  if (corteDashboard) {
+    logSemen(periodKey, '📅 Corte del dashboard usado: ' + fmtFechaDDMMYYYY(corteDashboard), '#374151');
+    semenPeriods[periodKey].fechaCorteServicios = corteDashboard;
   }
   renderSemen();
   toast('✅ Servicios importados para ' + count + ' granja(s) desde el dashboard');
@@ -715,17 +763,33 @@ function handleSemenFiles(fileList, periodKey) {
           } else {
             var baseName = file.name.replace(/\.[^.]+$/, '');
             var granjaKey2 = resolveGranjaKey(baseName);
-            var count = 0, total = 0;
+            var idxFecha = headers.indexOf('Fecha');
+            var count = 0, total = 0, maxFecha = null;
             for (var r2 = 1; r2 <= rng.e.r; r2++) {
               var dias = pn(cv(ws, r2, idxDias));
               if (dias === null) continue;
               var tipo = idxTipo >= 0 ? String(cv(ws, r2, idxTipo) || '').trim() : 'Repetición de celo';
               total++;
               if (/repetici/i.test(tipo) && ((dias >= 18 && dias <= 23) || (dias >= 39 && dias <= 44))) count++;
+              if (idxFecha >= 0) {
+                var fFila = parseFechaDDMMYYYY(cv(ws, r2, idxFecha));
+                if (fFila && (!maxFecha || fFila > maxFecha)) maxFecha = fFila;
+              }
             }
             var fe2 = ensureSemenFarm(periodKey, granjaKey2);
             fe2.repCiclicas = count;
             fe2.repTotal = total;
+            if (maxFecha && (!semenPeriods[periodKey].fechaFinRep || maxFecha > semenPeriods[periodKey].fechaFinRep)) {
+              semenPeriods[periodKey].fechaFinRep = maxFecha;
+            }
+            if (maxFecha && semenPeriods[periodKey].fechaCorteServicios) {
+              var diffDiasRep = Math.abs(semenPeriods[periodKey].fechaCorteServicios - maxFecha) / 86400000;
+              if (diffDiasRep > 60) {
+                logSemen(periodKey, '⚠️ Los Servicios importados para este período son de corte ' +
+                  fmtFechaDDMMYYYY(semenPeriods[periodKey].fechaCorteServicios) + ', pero este archivo de repeticiones (' +
+                  granjaKey2 + ') llega hasta ' + fmtFechaDDMMYYYY(maxFecha) + '. Verifica que correspondan al mismo período.', '#d97706');
+              }
+            }
             logSemen(periodKey, '✅ ' + granjaKey2 + ' — Repeticiones cíclicas: ' + count + ' de ' + total, '#15803d');
           }
         }
