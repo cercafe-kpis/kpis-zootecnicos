@@ -16,6 +16,7 @@ body.modo-asociado #uploadArea{display:none!important;}
 body.modo-asociado #asocSelWrap{display:none!important;}
 body.modo-asociado #spPublishPanel{display:none!important;}
 body.modo-asociado #modeTopBtn{display:none!important;}
+body.modo-asociado #modeSemenBtn{display:none!important;}
 /* TOPBAR */
 .topbar{background:#7b1010;height:50px;display:flex;align-items:center;padding:0 20px;gap:14px;}
 .topbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
@@ -257,6 +258,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
   <button class="mbtn on" id="modeIndBtn" onclick="setMode('ind')">🏠 Análisis por granja</button>
   <button class="mbtn" id="modeBmBtn" onclick="setMode('bm')">🏆 Benchmarking granjas</button>
   <button class="mbtn" id="modeTopBtn" onclick="setMode('top')" style="display:none;">📊 TOP TN</button>
+  <button class="mbtn" id="modeSemenBtn" onclick="setMode('semen')" style="display:none;">🧬 Análisis semen</button>
 </div>
 
 <div id="farmChips"></div>
@@ -473,6 +475,49 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
 </div>
 </div><!-- /modeTop -->
 
+<div id="modeSemen" style="display:none;">
+<div class="main">
+  <div class="card">
+    <div class="card-hd">
+      <h2>🧬 Análisis semen — Tasa de fertilidad</h2>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button class="btn sec" onclick="exportSemen()">↓ Exportar Excel</button>
+      </div>
+    </div>
+    <div style="padding:16px;">
+      <p style="font-size:12.5px;color:#6b7280;margin-bottom:14px;line-height:1.5;">
+        Tasa de fertilidad = (Servicios − Repeticiones cíclicas) / Servicios.
+        Los <b>Servicios</b> se toman del dato "I.A." del Excel S4 principal de Agriness (columna Cantidad).
+        Las <b>repeticiones cíclicas</b> se cuentan desde el archivo de repeticiones de cada granja: registros con "Días de gestación" entre 18–23 o 39–44 (Tipo de pérdida: Repetición de celo).
+        La granja se identifica por el nombre del archivo Excel de repeticiones.
+      </p>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="flex:1;min-width:280px;padding:14px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fa;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;" id="semenP1Label">📅 Período 1 — Ene-Jun 2025</div>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Sube aquí tanto los Excel S4 principales (para Servicios / I.A.) como los Excel de repeticiones de este período. Se detectan automáticamente por su contenido.</div>
+          <input type="file" id="semenFileP1" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p1')">
+          <button class="btn sec" onclick="document.getElementById('semenFileP1').click()">📁 Cargar archivos período 1</button>
+          <div id="semenLogP1" style="margin-top:8px;font-size:11px;max-height:120px;overflow:auto;"></div>
+        </div>
+        <div style="flex:1;min-width:280px;padding:14px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fa;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;" id="semenP2Label">📅 Período 2 — Ene-Jun 2026</div>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Sube aquí tanto los Excel S4 principales (para Servicios / I.A.) como los Excel de repeticiones de este período. Se detectan automáticamente por su contenido.</div>
+          <input type="file" id="semenFileP2" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p2')">
+          <button class="btn sec" onclick="document.getElementById('semenFileP2').click()">📁 Cargar archivos período 2</button>
+          <div id="semenLogP2" style="margin-top:8px;font-size:11px;max-height:120px;overflow:auto;"></div>
+        </div>
+      </div>
+
+      <div id="semenContent">
+        <div class="empty"><div class="ei">🧬</div><p>Carga los archivos de al menos un período para ver la tasa de fertilidad</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /modeSemen -->
+
+
 <footer>KPIs Zootécnicos con Propósito · Cercafe · La Carne de Cerdo del Eje Cafetero</footer>
 
 <script>
@@ -522,6 +567,241 @@ TABLA_MAESTRA.forEach(function(r) {
 
 // Helper: get display name for a farm key
 function nombreGranja(key) { return NOMBRE_MAP[key] || key; }
+
+// ===================== ANÁLISIS SEMEN — Tasa de fertilidad =====================
+var semenPeriods = {
+  p1: { label: 'Ene - Jun 2025', farms: {} },
+  p2: { label: 'Ene - Jun 2026', farms: {} }
+};
+
+function normalizeGranjaKey(str) {
+  return String(str || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar tildes
+    .replace(/[_\-–—]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+// Relaciona un nombre crudo (de archivo o de celda B1) con la clave canónica de TABLA_MAESTRA.
+// Si no encuentra coincidencia, usa el nombre tal cual (limpio) para no perder el dato.
+function resolveGranjaKey(rawName) {
+  var norm = normalizeGranjaKey(rawName);
+  var found = TABLA_MAESTRA.find(function(r) { return normalizeGranjaKey(r.granja) === norm; });
+  return found ? found.granja : String(rawName || '').trim();
+}
+
+function ensureSemenFarm(periodKey, key) {
+  if (!semenPeriods[periodKey].farms[key]) {
+    semenPeriods[periodKey].farms[key] = { servicios: null, repCiclicas: null, repTotal: null };
+  }
+  return semenPeriods[periodKey].farms[key];
+}
+
+function logSemen(periodKey, msg, color) {
+  var el = document.getElementById(periodKey === 'p1' ? 'semenLogP1' : 'semenLogP2');
+  if (!el) return;
+  var line = document.createElement('div');
+  line.style.color = color || '#374151';
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function handleSemenFiles(fileList, periodKey) {
+  var files = Array.prototype.slice.call(fileList);
+  if (!files.length) return;
+  var pend = files.length;
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rng = XLSX.utils.decode_range(ws['!ref']);
+        var a1 = String(cv(ws, 0, 0) || '');
+
+        if (/Fecha inicial:/i.test(a1)) {
+          // Excel S4 principal de Agriness -> extraer Servicios (I.A.)
+          var granjaRaw = String(cv(ws, 0, 1) || '').trim();
+          var granjaKey = resolveGranjaKey(granjaRaw);
+          var servicios = null;
+          for (var r = 0; r <= rng.e.r; r++) {
+            var lbl = String(cv(ws, r, 0) || '').trim();
+            if (lbl === 'I.A.') { servicios = pn(cv(ws, r, 1)); break; }
+          }
+          if (servicios === null) {
+            logSemen(periodKey, '⚠️ ' + file.name + ': no se encontró la fila "I.A."', '#d97706');
+          } else {
+            var fe = ensureSemenFarm(periodKey, granjaKey);
+            fe.servicios = servicios;
+            logSemen(periodKey, '✅ ' + granjaKey + ' — Servicios (I.A.): ' + servicios, '#15803d');
+          }
+        } else {
+          // Excel de repeticiones -> granja por nombre de archivo, contar repeticiones cíclicas
+          var headers = [];
+          for (var c = 0; c <= rng.e.c; c++) headers.push(String(cv(ws, 0, c) || '').trim());
+          var idxTipo = headers.indexOf('Tipo de pérdida');
+          var idxDias = headers.indexOf('Días de gestación');
+          if (idxDias < 0) {
+            logSemen(periodKey, '❌ ' + file.name + ': no parece un archivo de repeticiones válido (falta "Días de gestación")', '#dc2626');
+          } else {
+            var baseName = file.name.replace(/\.[^.]+$/, '');
+            var granjaKey2 = resolveGranjaKey(baseName);
+            var count = 0, total = 0;
+            for (var r2 = 1; r2 <= rng.e.r; r2++) {
+              var dias = pn(cv(ws, r2, idxDias));
+              if (dias === null) continue;
+              var tipo = idxTipo >= 0 ? String(cv(ws, r2, idxTipo) || '').trim() : 'Repetición de celo';
+              total++;
+              if (/repetici/i.test(tipo) && ((dias >= 18 && dias <= 23) || (dias >= 39 && dias <= 44))) count++;
+            }
+            var fe2 = ensureSemenFarm(periodKey, granjaKey2);
+            fe2.repCiclicas = count;
+            fe2.repTotal = total;
+            logSemen(periodKey, '✅ ' + granjaKey2 + ' — Repeticiones cíclicas: ' + count + ' de ' + total, '#15803d');
+          }
+        }
+      } catch (err) {
+        console.error('Error procesando ' + file.name, err);
+        logSemen(periodKey, '❌ Error en ' + file.name + ': ' + err.message, '#dc2626');
+      } finally {
+        pend--;
+        if (pend === 0) { renderSemen(); toast('✅ Archivos de Análisis semen procesados'); }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function calcTasaFertilidad(fe) {
+  if (!fe || fe.servicios === null || fe.servicios === undefined || fe.repCiclicas === null || fe.repCiclicas === undefined) return null;
+  if (!fe.servicios) return null;
+  return (fe.servicios - fe.repCiclicas) / fe.servicios * 100;
+}
+
+function renderSemen() {
+  var cont = document.getElementById('semenContent');
+  document.getElementById('semenP1Label').textContent = '📅 Período 1 — ' + semenPeriods.p1.label;
+  document.getElementById('semenP2Label').textContent = '📅 Período 2 — ' + semenPeriods.p2.label;
+
+  var keys = {};
+  Object.keys(semenPeriods.p1.farms).forEach(function(k) { keys[k] = 1; });
+  Object.keys(semenPeriods.p2.farms).forEach(function(k) { keys[k] = 1; });
+  var granjas = Object.keys(keys).sort();
+
+  if (!granjas.length) {
+    cont.innerHTML = '<div class="empty"><div class="ei">🧬</div><p>Carga los archivos de al menos un período para ver la tasa de fertilidad</p></div>';
+    return;
+  }
+
+  var rows = granjas.map(function(g) {
+    var fe1 = semenPeriods.p1.farms[g], fe2 = semenPeriods.p2.farms[g];
+    var t1 = calcTasaFertilidad(fe1), t2 = calcTasaFertilidad(fe2);
+    return { g: g, nombre: nombreGranja(g), fe1: fe1, fe2: fe2, t1: t1, t2: t2 };
+  });
+
+  // Consolidado Cercafe: solo granjas con datos completos en cada período
+  function consolidado(periodKey) {
+    var sumServ = 0, sumRep = 0, n = 0;
+    granjas.forEach(function(g) {
+      var fe = semenPeriods[periodKey].farms[g];
+      if (fe && fe.servicios !== null && fe.servicios !== undefined && fe.repCiclicas !== null && fe.repCiclicas !== undefined) {
+        sumServ += fe.servicios; sumRep += fe.repCiclicas; n++;
+      }
+    });
+    return { servicios: sumServ, repCiclicas: sumRep, tasa: sumServ ? (sumServ - sumRep) / sumServ * 100 : null, n: n };
+  }
+  var c1 = consolidado('p1'), c2 = consolidado('p2');
+
+  var fmt = function(v, dec) { return (v === null || v === undefined) ? '—' : v.toFixed(dec === undefined ? 0 : dec); };
+  var fmtPct = function(v) { return (v === null || v === undefined) ? '—' : v.toFixed(1) + '%'; };
+
+  var html = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">' +
+    '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📊 Cercafe ' + semenPeriods.p1.label + '</div><div class="bm-sv" style="color:#1060a8">' + fmtPct(c1.tasa) + '</div><div class="bm-ss">' + c1.n + ' granjas · ' + fmt(c1.servicios) + ' servicios</div></div>' +
+    '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📊 Cercafe ' + semenPeriods.p2.label + '</div><div class="bm-sv" style="color:#1060a8">' + fmtPct(c2.tasa) + '</div><div class="bm-ss">' + c2.n + ' granjas · ' + fmt(c2.servicios) + ' servicios</div></div>' +
+    '<div class="bm-sc" style="flex:1;min-width:200px;"><div class="bm-sk">📈 Variación consolidado</div><div class="bm-sv" style="color:' + ((c1.tasa !== null && c2.tasa !== null && c2.tasa >= c1.tasa) ? '#15803d' : '#dc2626') + '">' + ((c1.tasa !== null && c2.tasa !== null) ? (c2.tasa - c1.tasa >= 0 ? '+' : '') + (c2.tasa - c1.tasa).toFixed(1) + ' pts' : '—') + '</div><div class="bm-ss">vs. período anterior</div></div>' +
+    '</div>';
+
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+    '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dde1e7;">' +
+    '<th style="text-align:left;padding:8px;">Granja</th>' +
+    '<th style="text-align:right;padding:8px;" colspan="3">' + semenPeriods.p1.label + '</th>' +
+    '<th style="text-align:right;padding:8px;" colspan="3">' + semenPeriods.p2.label + '</th>' +
+    '<th style="text-align:right;padding:8px;">Δ pts</th>' +
+    '</tr><tr style="background:#f8f9fa;border-bottom:1px solid #dde1e7;color:#6b7280;font-size:11px;">' +
+    '<th></th><th style="text-align:right;padding:4px 8px;">Servicios</th><th style="text-align:right;padding:4px 8px;">Rep. cíclicas</th><th style="text-align:right;padding:4px 8px;">Tasa fertilidad</th>' +
+    '<th style="text-align:right;padding:4px 8px;">Servicios</th><th style="text-align:right;padding:4px 8px;">Rep. cíclicas</th><th style="text-align:right;padding:4px 8px;">Tasa fertilidad</th>' +
+    '<th></th></tr></thead><tbody>';
+
+  rows.forEach(function(row) {
+    var delta = (row.t1 !== null && row.t2 !== null) ? row.t2 - row.t1 : null;
+    var deltaColor = delta === null ? '#6b7280' : (delta >= 0 ? '#15803d' : '#dc2626');
+    html += '<tr style="border-bottom:1px solid #f0f2f5;">' +
+      '<td style="padding:7px 8px;font-weight:600;">' + row.nombre + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe1 ? row.fe1.servicios : null) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe1 ? row.fe1.repCiclicas : null) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;font-weight:600;">' + fmtPct(row.t1) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe2 ? row.fe2.servicios : null) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;">' + fmt(row.fe2 ? row.fe2.repCiclicas : null) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;font-weight:600;">' + fmtPct(row.t2) + '</td>' +
+      '<td style="text-align:right;padding:7px 8px;color:' + deltaColor + ';font-weight:600;">' + (delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(1)) + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  html += '<div style="margin-top:20px;"><canvas id="semenChart" height="90"></canvas></div>';
+
+  cont.innerHTML = html;
+
+  if (window._semenChart) { window._semenChart.destroy(); window._semenChart = null; }
+  var orphan = (typeof Chart.getChart === 'function') ? Chart.getChart(document.getElementById('semenChart')) : null;
+  if (orphan) orphan.destroy();
+
+  window._semenChart = new Chart(document.getElementById('semenChart'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(function(r) { return r.nombre; }),
+      datasets: [
+        { label: semenPeriods.p1.label, data: rows.map(function(r) { return r.t1; }), backgroundColor: '#93c5b8' },
+        { label: semenPeriods.p2.label, data: rows.map(function(r) { return r.t2; }), backgroundColor: '#1a7a4a' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { title: { display: true, text: 'Tasa de fertilidad (%)' } } }
+    }
+  });
+}
+
+function exportSemen() {
+  var granjas = {};
+  Object.keys(semenPeriods.p1.farms).forEach(function(k) { granjas[k] = 1; });
+  Object.keys(semenPeriods.p2.farms).forEach(function(k) { granjas[k] = 1; });
+  var names = Object.keys(granjas).sort();
+  if (!names.length) { toast('⚠️ No hay datos para exportar'); return; }
+
+  var aoa = [['Granja',
+    'Servicios ' + semenPeriods.p1.label, 'Rep. cíclicas ' + semenPeriods.p1.label, 'Tasa fertilidad ' + semenPeriods.p1.label + ' (%)',
+    'Servicios ' + semenPeriods.p2.label, 'Rep. cíclicas ' + semenPeriods.p2.label, 'Tasa fertilidad ' + semenPeriods.p2.label + ' (%)',
+    'Δ pts']];
+  names.forEach(function(g) {
+    var fe1 = semenPeriods.p1.farms[g], fe2 = semenPeriods.p2.farms[g];
+    var t1 = calcTasaFertilidad(fe1), t2 = calcTasaFertilidad(fe2);
+    aoa.push([nombreGranja(g),
+      fe1 ? fe1.servicios : '', fe1 ? fe1.repCiclicas : '', t1 !== null ? +t1.toFixed(2) : '',
+      fe2 ? fe2.servicios : '', fe2 ? fe2.repCiclicas : '', t2 !== null ? +t2.toFixed(2) : '',
+      (t1 !== null && t2 !== null) ? +(t2 - t1).toFixed(2) : '']);
+  });
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Analisis semen');
+  XLSX.writeFile(wb, 'Analisis_Semen_Cercafe.xlsx');
+  toast('✅ Exportado Analisis_Semen_Cercafe.xlsx');
+}
+// =================== FIN ANÁLISIS SEMEN =====================
 
 var asociadoFiltro = 'Todos';
 
@@ -1213,6 +1493,10 @@ function finalizeLoad() {
   if (topBtn && !document.body.classList.contains('modo-asociado')) {
     topBtn.style.display = 'inline-block';
   }
+  var semenBtn = document.getElementById('modeSemenBtn');
+  if (semenBtn && !document.body.classList.contains('modo-asociado')) {
+    semenBtn.style.display = 'inline-block';
+  }
   var names = Object.keys(allFarms);
   if (!names.length) return;
 
@@ -1862,6 +2146,10 @@ function finalizeLoad() {
   var topBtn = document.getElementById('modeTopBtn');
   if (topBtn && !document.body.classList.contains('modo-asociado')) {
     topBtn.style.display = 'inline-block';
+  }
+  var semenBtn = document.getElementById('modeSemenBtn');
+  if (semenBtn && !document.body.classList.contains('modo-asociado')) {
+    semenBtn.style.display = 'inline-block';
   }
   var names = Object.keys(allFarms);
   if (!names.length) return;
@@ -3958,11 +4246,14 @@ function setMode(m) {
   document.getElementById('modeInd').style.display = m==='ind'?'block':'none';
   document.getElementById('modeBm').style.display  = m==='bm'?'block':'none';
   document.getElementById('modeTop').style.display = m==='top'?'block':'none';
+  document.getElementById('modeSemen').style.display = m==='semen'?'block':'none';
   document.getElementById('modeIndBtn').className  = 'mbtn' + (m==='ind'?' on':'');
   document.getElementById('modeBmBtn').className   = 'mbtn' + (m==='bm'?' on':'');
   document.getElementById('modeTopBtn').className  = 'mbtn' + (m==='top'?' on':'');
+  document.getElementById('modeSemenBtn').className = 'mbtn' + (m==='semen'?' on':'');
   if (m==='top') renderTopTN();
   if (m==='bm') renderBM();
+  if (m==='semen') renderSemen();
 }
 
 function showOv(msg) {
