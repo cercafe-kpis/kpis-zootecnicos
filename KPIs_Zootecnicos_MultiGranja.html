@@ -206,7 +206,7 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
   if (a && a !== 'admin') {
     // Inject CSS immediately to hide upload before DOM renders
     var s = document.createElement('style');
-    s.textContent = '#uploadArea{display:none!important;} #asocSelWrap{display:none!important;} #asocBanner{display:block!important;}';
+    s.textContent = '#uploadArea{display:none!important;} #asocSelWrap{display:none!important;} #asocBanner{display:block!important;} #modeTopBtn{display:none!important;} #modeSemenBtn{display:none!important;} #modeTop{display:none!important;} #modeSemen{display:none!important;}';
     document.head.appendChild(s);
     document.documentElement.setAttribute('data-asociado', decodeURIComponent(a));
   }
@@ -224,6 +224,11 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
     <span style="color:#f5c6c6;font-size:11px;font-weight:400;">con Propósito</span>
   </div>
   <div class="topbar-right">
+     <div id="fechaCorteWrap" style="display:none;align-items:center;gap:6px;background:rgba(255,255,255,0.12);border-radius:6px;padding:4px 12px;">
+      <span style="font-size:11px;">📅</span>
+      <span style="color:#f5c6c6;font-size:11px;font-weight:600;">Datos con corte a:</span>
+      <span id="fechaCorteDisplay" style="color:#fff;font-size:12px;font-weight:700;"></span>
+    </div>
      <div id="asocSelWrap" style="display:none;align-items:center;gap:6px;position:relative;">
       <label style="color:#f5c6c6;font-size:11px;font-weight:600;">Asociado:</label>
       <div id="asocDropdown" style="position:relative;display:inline-block;">
@@ -567,6 +572,29 @@ TABLA_MAESTRA.forEach(function(r) {
 
 // Helper: get display name for a farm key
 function nombreGranja(key) { return NOMBRE_MAP[key] || key; }
+
+// Calcula y muestra la fecha de corte (Fecha final más reciente entre todas las granjas cargadas)
+function actualizarFechaCorte() {
+  var el = document.getElementById('fechaCorteDisplay');
+  var wrap = document.getElementById('fechaCorteWrap');
+  if (!el || !wrap) return;
+  var maxDate = null, maxStr = null;
+  Object.keys(allFarms).forEach(function(f) {
+    var periodo = allFarms[f].periodo || '';
+    var m = periodo.match(/(\d{2}\/\d{2}\/\d{4})\s*—\s*(\d{2}\/\d{2}\/\d{4})/);
+    if (m) {
+      var parts = m[2].split('/');
+      var d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+      if (!maxDate || d > maxDate) { maxDate = d; maxStr = m[2]; }
+    }
+  });
+  if (maxStr) {
+    el.textContent = maxStr;
+    wrap.style.display = 'flex';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
 
 // ===================== ANÁLISIS SEMEN — Tasa de fertilidad =====================
 var semenPeriods = {
@@ -1536,6 +1564,7 @@ function finalizeLoad() {
   }
   document.getElementById('farmCount').textContent = names.length + (names.length===1?' granja':' granjas');
   document.getElementById('bmFarmCount').textContent = names.length;
+  actualizarFechaCorte();
 
   // Chips
   renderChips();
@@ -1612,6 +1641,7 @@ function removeFarm(name) {
     document.getElementById('farmCount').style.display = 'none';
     document.getElementById('asocSelWrap').style.display = 'none';
     document.getElementById('farmChips').style.display = 'none';
+    document.getElementById('fechaCorteWrap').style.display = 'none';
     activeFarm=''; farmName=''; rawData={}; allVars=[]; criticos=[]; kpis=[];
     return;
   }
@@ -2190,6 +2220,7 @@ function finalizeLoad() {
   }
   document.getElementById('farmCount').textContent = names.length + (names.length===1?' granja':' granjas');
   document.getElementById('bmFarmCount').textContent = names.length;
+  actualizarFechaCorte();
 
   // Chips
   renderChips();
@@ -2266,6 +2297,7 @@ function removeFarm(name) {
     document.getElementById('farmCount').style.display = 'none';
     document.getElementById('asocSelWrap').style.display = 'none';
     document.getElementById('farmChips').style.display = 'none';
+    document.getElementById('fechaCorteWrap').style.display = 'none';
     activeFarm=''; farmName=''; rawData={}; allVars=[]; criticos=[]; kpis=[];
     return;
   }
