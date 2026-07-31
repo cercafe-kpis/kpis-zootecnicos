@@ -500,24 +500,27 @@ footer{background:#fff;border-top:1px solid #dde1e7;text-align:center;padding:12
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
         <div style="flex:1;min-width:280px;padding:14px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fa;">
           <div style="font-weight:600;font-size:13px;margin-bottom:8px;" id="semenP1Label">📅 Período 1 — Ene-Jun 2025</div>
-          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Si ya tienes este período cargado en el dashboard (subido o traído de SharePoint), usa el primer botón para tomar los Servicios (I.A.) de ahí sin volver a subir nada. Solo necesitas subir el Excel de repeticiones.</div>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">1) Sube aquí el Excel de repeticiones de este período. 2) Dale clic a "Buscar Servicios automáticamente" — el sistema busca en SharePoint, para cada asociado, el archivo cuyo corte coincida con la fecha real de tus repeticiones, sin importar qué período tengas cargado ahora mismo en el dashboard principal.</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn sec" onclick="importarServiciosDesdeAllFarms('p1')">📥 Usar Servicios del dashboard cargado</button>
             <input type="file" id="semenFileP1" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p1')">
-            <button class="btn sec" onclick="document.getElementById('semenFileP1').click()">📁 Cargar archivos período 1</button>
+            <button class="btn sec" onclick="document.getElementById('semenFileP1').click()">📁 Cargar Excel de repeticiones</button>
+            <button class="btn sec" onclick="buscarServiciosPorFecha('p1')">🔎 Buscar Servicios automáticamente</button>
           </div>
+          <div style="margin-top:6px;"><a href="#" onclick="importarServiciosDesdeAllFarms('p1');return false;" style="font-size:11px;color:#6b7280;">📥 (alternativa manual) usar lo que ya esté cargado ahora en el dashboard</a></div>
           <div id="semenLogP1" style="margin-top:8px;font-size:11px;max-height:120px;overflow:auto;"></div>
         </div>
         <div style="flex:1;min-width:280px;padding:14px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fa;">
           <div style="font-weight:600;font-size:13px;margin-bottom:8px;" id="semenP2Label">📅 Período 2 — Ene-Jun 2026</div>
-          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">Si ya tienes este período cargado en el dashboard (subido o traído de SharePoint), usa el primer botón para tomar los Servicios (I.A.) de ahí sin volver a subir nada. Solo necesitas subir el Excel de repeticiones.</div>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:8px;">1) Sube aquí el Excel de repeticiones de este período. 2) Dale clic a "Buscar Servicios automáticamente" — el sistema busca en SharePoint, para cada asociado, el archivo cuyo corte coincida con la fecha real de tus repeticiones, sin importar qué período tengas cargado ahora mismo en el dashboard principal.</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn sec" onclick="importarServiciosDesdeAllFarms('p2')">📥 Usar Servicios del dashboard cargado</button>
             <input type="file" id="semenFileP2" multiple accept=".xlsx,.xls" style="display:none;" onchange="handleSemenFiles(this.files,'p2')">
-            <button class="btn sec" onclick="document.getElementById('semenFileP2').click()">📁 Cargar archivos período 2</button>
+            <button class="btn sec" onclick="document.getElementById('semenFileP2').click()">📁 Cargar Excel de repeticiones</button>
+            <button class="btn sec" onclick="buscarServiciosPorFecha('p2')">🔎 Buscar Servicios automáticamente</button>
           </div>
+          <div style="margin-top:6px;"><a href="#" onclick="importarServiciosDesdeAllFarms('p2');return false;" style="font-size:11px;color:#6b7280;">📥 (alternativa manual) usar lo que ya esté cargado ahora en el dashboard</a></div>
           <div id="semenLogP2" style="margin-top:8px;font-size:11px;max-height:120px;overflow:auto;"></div>
         </div>
+
       </div>
 
       <div id="semenContent">
@@ -650,6 +653,73 @@ function ensureSemenFarm(periodKey, key) {
 // en el dashboard (allFarms) — sin necesidad de volver a subir el Excel S4.
 // Requiere que el período correspondiente esté cargado en el dashboard en
 // ese momento (subido por el admin o traído de SharePoint).
+// Busca automáticamente en SharePoint, para cada asociado, el archivo cuyo
+// corte coincide con la fecha real encontrada en el archivo de repeticiones
+// de este período — sin importar qué período tenga cargado en ese momento
+// el dashboard principal. No toca allFarms para nada.
+async function buscarServiciosPorFecha(periodKey) {
+  var fechaObjetivo = semenPeriods[periodKey].fechaFinRep;
+  if (!fechaObjetivo) {
+    toast('⚠️ Primero sube el Excel de repeticiones de este período — así sabemos qué fecha buscar');
+    return;
+  }
+
+  if (!spToken) {
+    logSemen(periodKey, '🔐 Iniciando sesión con Microsoft...', '#0078d4');
+    sessionStorage.setItem('spPendingSemenLoad', periodKey);
+    await spLogin();
+    return;
+  }
+
+  logSemen(periodKey, '🔎 Buscando el archivo con corte cercano a ' + fmtFechaDDMMYYYY(fechaObjetivo) + ' en cada asociado...', '#0078d4');
+
+  var count = 0, sinIA = [], sinArchivo = [];
+  for (var asocName in ASOCIADOS) {
+    var info = ASOCIADOS[asocName];
+    try {
+      var siteId = await spGetSiteId2(info.sp);
+      var driveId = await spGetDriveId(siteId);
+      var archivos = await listarArchivosPeriodo(driveId);
+      var archivoElegido = elegirArchivoPorFecha(archivos, fechaObjetivo);
+      if (!archivoElegido) { sinArchivo.push(asocName); continue; }
+
+      var url = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
+        '/root:/KPIs%20Zootecnicos/' + encodeURIComponent(archivoElegido) + ':/content';
+      var r = await spCall(url);
+      if (!r.ok) { sinArchivo.push(asocName); continue; }
+      var data = await r.json();
+      if (data.farms) {
+        Object.keys(data.farms).forEach(function(fname) {
+          var fd = data.farms[fname];
+          var av = fd.allVars || [];
+          var varIA = av.find(function(x) { return x.name === 'I.A.'; });
+          var granjaKey = resolveGranjaKey(fname);
+          if (varIA && varIA.value !== null && varIA.value !== undefined) {
+            var fe = ensureSemenFarm(periodKey, granjaKey);
+            fe.servicios = varIA.value;
+            count++;
+            logSemen(periodKey, '✅ ' + granjaKey + ' — Servicios (I.A.): ' + varIA.value, '#15803d');
+          } else {
+            sinIA.push(granjaKey);
+          }
+        });
+      }
+    } catch (e) {
+      logSemen(periodKey, '❌ ' + asocName + ': ' + e.message, '#dc2626');
+    }
+  }
+
+  if (sinArchivo.length) {
+    logSemen(periodKey, '⚠️ No se encontró un archivo con corte cercano a ' + fmtFechaDDMMYYYY(fechaObjetivo) + ' para: ' + sinArchivo.join(', '), '#d97706');
+  }
+  if (sinIA.length) {
+    logSemen(periodKey, '⚠️ Sin dato "I.A." en: ' + sinIA.join(', '), '#d97706');
+  }
+  semenPeriods[periodKey].fechaCorteServicios = fechaObjetivo;
+  renderSemen();
+  toast('✅ Servicios importados para ' + count + ' granja(s) — corte ' + fmtFechaDDMMYYYY(fechaObjetivo));
+}
+
 function importarServiciosDesdeAllFarms(periodKey) {
   var farmKeys = Object.keys(allFarms || {});
   if (!farmKeys.length) {
@@ -680,8 +750,9 @@ function importarServiciosDesdeAllFarms(periodKey) {
     if (diffDias > 60) {
       logSemen(periodKey, '❌ El dashboard tiene cargado el corte ' + fmtFechaDDMMYYYY(corteDashboard) +
         ', pero el archivo de repeticiones de este período corresponde a ' + fmtFechaDDMMYYYY(fechaEsperada) +
-        '. Cambia el dashboard al período correcto antes de importar.', '#dc2626');
-      toast('❌ El dashboard no coincide con el período de este archivo de repeticiones');
+        '. Ve al selector "Período" en la parte superior del dashboard y cambia al archivo con corte ' +
+        fmtFechaDDMMYYYY(fechaEsperada) + ', luego vuelve a intentar.', '#dc2626');
+      toast('❌ Cambia el selector "Período" arriba al corte ' + fmtFechaDDMMYYYY(fechaEsperada) + ' primero');
       return;
     }
   }
@@ -3521,6 +3592,24 @@ function elegirArchivoMasReciente(files) {
   return tieneGenerico ? 'kpis_data.json' : (files[0] ? files[0].name : 'kpis_data.json');
 }
 
+// Dada la lista de archivos y una fecha objetivo, encuentra el archivo cuyo
+// corte esté más cerca de esa fecha (dentro de una tolerancia). A diferencia
+// de elegirArchivoMasReciente, esto no busca "el más nuevo" sino "el que
+// coincide con una fecha específica" — usado para hacer match automático
+// contra la fecha real de un archivo de repeticiones.
+function elegirArchivoPorFecha(files, fechaObjetivo, toleranciaDias) {
+  toleranciaDias = toleranciaDias || 60;
+  var mejor = null, mejorDiff = Infinity;
+  files.forEach(function(f) {
+    var fecha = parseFechaFinArchivo(f.name);
+    if (fecha) {
+      var diff = Math.abs(fecha - fechaObjetivo) / 86400000;
+      if (diff < mejorDiff) { mejorDiff = diff; mejor = f.name; }
+    }
+  });
+  return (mejor && mejorDiff <= toleranciaDias) ? mejor : null;
+}
+
 async function listarArchivosPeriodo(driveId) {
   var listUrl = 'https://graph.microsoft.com/v1.0/drives/' + driveId +
     '/root:/KPIs%20Zootecnicos:/children?$select=name,lastModifiedDateTime';
@@ -3927,6 +4016,11 @@ window.addEventListener('message', function(e) {
       if (pendingAdmin) {
         sessionStorage.removeItem('spPendingAdminLoad');
         cargarDesdeSharePoint();
+      }
+      var pendingSemen = sessionStorage.getItem('spPendingSemenLoad');
+      if (pendingSemen) {
+        sessionStorage.removeItem('spPendingSemenLoad');
+        buscarServiciosPorFecha(pendingSemen);
       }
     });
   } else if (e.data && e.data.type === 'SP_AUTH_ERROR') {
