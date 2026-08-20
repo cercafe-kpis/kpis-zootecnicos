@@ -4026,6 +4026,11 @@ async function listarPeriodosAdmin() {
     var files = (d.value || []).filter(function(f) {
       return f.name && f.name.startsWith('kpis_data') && f.name.endsWith('.json');
     });
+    // Oculta el archivo genérico "kpis_data.json" del selector cuando ya
+    // existen archivos con fecha: ese archivo no representa un período real
+    // y solo generaba una opción de ruido tipo "kpis data" en la lista.
+    var filesConFechaAdmin = files.filter(function(f) { return parseFechaFinArchivo(f.name); });
+    if (filesConFechaAdmin.length) files = filesConFechaAdmin;
     if (files.length <= 1) return;
 
     var sel = document.getElementById('periodoSelector');
@@ -4120,6 +4125,11 @@ async function listarPeriodos(asocName, currentFile) {
     var files = (d.value || []).filter(function(f) {
       return f.name && f.name.startsWith('kpis_data') && f.name.endsWith('.json');
     });
+    // Oculta el archivo genérico "kpis_data.json" del selector cuando ya
+    // existen archivos con fecha: ese archivo no representa un período real
+    // y solo generaba una opción de ruido tipo "kpis data" en la lista.
+    var filesConFecha = files.filter(function(f) { return parseFechaFinArchivo(f.name); });
+    if (filesConFecha.length) files = filesConFecha;
     if (files.length <= 1) return; // Solo el actual, no mostrar selector
 
     var sel = document.getElementById('periodoSelector');
@@ -4127,6 +4137,12 @@ async function listarPeriodos(asocName, currentFile) {
     if (!sel || !wrap) return;
 
     var archivoMasReciente = elegirArchivoMasReciente(files);
+    // Si el archivo actualmente cargado (currentFile) quedó fuera de la lista
+    // filtrada (p.ej. era el genérico kpis_data.json), selecciona el más
+    // reciente en su lugar para que el selector no quede sin opción marcada.
+    var currentFileEfectivo = files.some(function(f) { return f.name === currentFile; })
+      ? currentFile
+      : archivoMasReciente;
 
     sel.innerHTML = '';
     files.forEach(function(f) {
@@ -4140,7 +4156,7 @@ async function listarPeriodos(asocName, currentFile) {
       } else {
         opt.textContent = f.name.replace('kpis_data_', '').replace('.json', '').replace(/_/g, ' ');
       }
-      opt.selected = (f.name === currentFile);
+      opt.selected = (f.name === currentFileEfectivo);
       sel.appendChild(opt);
     });
     wrap.style.display = 'flex';
